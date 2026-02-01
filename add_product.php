@@ -94,7 +94,6 @@ if (isset($_POST['submit'])) {
 
                 <div class="mb-3">
                     <label class="form-label">รูปภาพอาหาร (เลือกได้หลายรูป):</label>
-                    <input type="file" name="product_images[]" class="form-control" multiple="multiple" required>
                     <input type="file" name="product_images[]" class="form-control" multiple="multiple" accept="image/*" required>
                     <small class="text-muted">* กด Ctrl ค้างไว้เพื่อเลือกหลายรูป</small>
                 </div>

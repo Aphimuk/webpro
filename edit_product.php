@@ -91,7 +91,6 @@ if (isset($_POST['update'])) {
                     <textarea name="description" class="form-control mb-2"><?php echo $product['description']; ?></textarea>
 
                     <label>เพิ่มรูปภาพใหม่ (เลือกเพิ่มได้หลายรูป):</label>
-                    <input type="file" name="product_images[]" class="form-control mb-3" multiple>
                     <input type="file" name="product_images[]" class="form-control mb-3" multiple accept="image/*">
                     
                     <div class="alert alert-info">
