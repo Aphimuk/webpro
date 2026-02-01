@@ -2,64 +2,49 @@
 session_start();
 require_once ('connect.php');
 
-// กำหนดตัวแปรสำหรับเก็บค่าเดิม (เพิ่มที่อยู่และเบอร์โทร)
+// --- (ส่วน Logic PHP เหมือนเดิมทุกประการ ไม่ต้องแก้) ---
 $old_fullname = "";
 $old_username = "";
-$old_address = "";  // * ใหม่
-$old_phone = "";    // * ใหม่
-
+$old_address = "";  
+$old_phone = "";    
 $register_error = ""; 
 $register_success = ""; 
 $login_error = "";    
 
-// 1. Logic การสมัครสมาชิก
 if (isset($_POST['register'])) {
-    // รับค่าและป้องกัน SQL Injection
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password']; 
     $name = $conn->real_escape_string($_POST['fullname']);
-    
-    // * รับค่าใหม่ (ที่อยู่ & เบอร์โทร)
     $address = $conn->real_escape_string($_POST['address']);
     $phone = $conn->real_escape_string($_POST['phone']);
-    
     $role = 'customer'; 
 
-    // **เก็บค่าเดิมไว้ส่งกลับหน้าฟอร์ม (รวมถึงฟิลด์ใหม่ด้วย)**
     $old_fullname = $name;
     $old_username = $user;
     $old_address = $address;
     $old_phone = $phone;
 
-    // ตรวจสอบ Username ซ้ำ
     $check_sql = "SELECT username FROM users WHERE username = '$user'";
     $check_result = $conn->query($check_sql);
 
     if ($check_result->num_rows > 0) {
         $register_error = "⚠️ Username '$user' มีผู้ใช้งานแล้ว! กรุณาเปลี่ยนชื่อใหม่";
     } else {
-        // เข้ารหัสรหัสผ่าน
         $password_hashed = password_hash($pass, PASSWORD_DEFAULT);
-        
-        // * อัปเดตคำสั่ง INSERT ให้บันทึกที่อยู่และเบอร์โทร
         $sql = "INSERT INTO users (username, password, fullname, address, phone, role) 
                 VALUES ('$user', '$password_hashed', '$name', '$address', '$phone', '$role')";
         
         if($conn->query($sql)){ 
             $register_success = "✅ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ";
-            
-            // สมัครผ่านแล้ว ล้างค่าเดิมทิ้ง
             $old_fullname = "";
             $old_address = "";
             $old_phone = "";
-            // old_username เก็บไว้เติมช่อง login เหมือนเดิม
         } else {
             $register_error = "เกิดข้อผิดพลาดระบบ: " . $conn->error;
         }
     }
 }
 
-// 2. Logic การ Login (เหมือนเดิม)
 if (isset($_POST['login'])) {
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
@@ -97,96 +82,133 @@ if (isset($_POST['login'])) {
     <title>เข้าสู่ระบบ / สมัครสมาชิก</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-</head>
-<body class="bg-light"> 
     
-    <div class="container mt-5">
-        
-        <?php if($register_success != ""): ?>
-            <div class="alert alert-success text-center fs-5 fw-bold shadow-sm" role="alert">
-                <i class="fas fa-check-circle"></i> <?php echo $register_success; ?>
-            </div>
-        <?php endif; ?>
+    <style>
+        /* CSS เดิมของคุณ */
+        .form-box {
+            position: absolute;
+            right: 0;
+            top: 0; /* เพิ่ม top: 0 ให้ชิดขอบบน */
+            width: 50%;     
+            height: 100%;
+            background: #fff;
+            display: flex;
+            align-items: center; /* จัดกึ่งกลางแนวตั้ง */
+            justify-content: center; /* เพิ่มจัดกึ่งกลางแนวนอน */
+            color: #333;        
+            text-align: left; /* เปลี่ยนเป็น left ให้อ่านง่าย */
+            padding: 40px;
+            overflow-y: auto; /* สำคัญ! ถ้าฟอร์มยาวเกินจอ ให้เลื่อนได้ */
+        }
 
-        <div class="row justify-content-center">
-            
-            <div class="col-md-5 mb-4">
-                <div class="card p-4 shadow-sm h-100 border-0">
-                    <h4 class="mb-3 text-primary"><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</h4>
-                    
-                    <?php if($login_error != ""): ?>
-                        <div class="alert alert-danger p-2 text-center" role="alert">
-                            <?php echo $login_error; ?>
-                        </div>
-                    <?php endif; ?>
+        /* เพิ่ม CSS ตกแต่งพื้นหลังด้านซ้าย */
+        body {
+            background-color: #2c3e50; /* สีพื้นหลังฝั่งซ้าย (เปลี่ยนเป็นรูปได้) */
+            background-image: url('https://source.unsplash.com/random/1920x1080/?food'); /* ตัวอย่างรูปพื้นหลัง */
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* ซ่อน Scrollbar ของ Body หลัก */
+        }
 
-                    <form method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" 
-                                   value="<?php echo ($register_success != "") ? htmlspecialchars($old_username) : ''; ?>" 
-                                   required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
-                        </div>
-                        <button type="submit" name="login" class="btn btn-primary w-100 py-2">เข้าสู่ระบบ</button>
-                    </form>
+        /* ปรับแต่งบนมือถือ (จอเล็กกว่า 768px) */
+        @media (max-width: 768px) {
+            .form-box {
+                width: 100%; /* เต็มจอ */
+                position: relative; /* ไม่ต้องลอย */
+                height: auto;
+            }
+            body {
+                overflow: auto; /* ให้เลื่อนได้ปกติ */
+            }
+        }
+    </style>
+</head>
+<body> 
+    
+    <div class="form-box shadow-lg">
+        <div class="container-fluid"> <?php if($register_success != ""): ?>
+                <div class="alert alert-success text-center fs-5 fw-bold shadow-sm mb-4" role="alert">
+                    <i class="fas fa-check-circle"></i> <?php echo $register_success; ?>
                 </div>
-            </div>
+            <?php endif; ?>
 
-            <div class="col-md-6 mb-4">
-                <div class="card p-4 shadow-sm h-100 border-0">
-                    <h4 class="mb-3 text-success"><i class="fas fa-user-plus"></i> สมัครสมาชิกใหม่</h4>
-                    
-                    <?php if($register_error != ""): ?>
-                        <div class="alert alert-danger border-2 border-danger shadow-sm text-center fw-bold" role="alert">
-                            <i class="fas fa-exclamation-triangle"></i> <?php echo $register_error; ?>
-                        </div>
-                    <?php endif; ?>
+            <div class="row g-4"> <div class="col-12">
+                    <div class="card p-4 shadow-sm border-0 bg-light">
+                        <h4 class="mb-3 text-primary"><i class="fas fa-sign-in-alt"></i> เข้าสู่ระบบ</h4>
+                        
+                        <?php if($login_error != ""): ?>
+                            <div class="alert alert-danger p-2 text-center" role="alert">
+                                <?php echo $login_error; ?>
+                            </div>
+                        <?php endif; ?>
 
-                    <form method="post">
-                        <div class="mb-3">
-                            <label class="form-label">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
-                            <input type="text" name="fullname" class="form-control" 
-                                   value="<?php echo htmlspecialchars($old_fullname); ?>" 
-                                   required>
-                        </div>
+                        <form method="post">
+                            <div class="row">
+                                <div class="col-md-5 mb-2">
+                                    <input type="text" name="username" class="form-control" placeholder="Username"
+                                           value="<?php echo ($register_success != "") ? htmlspecialchars($old_username) : ''; ?>" required>
+                                </div>
+                                <div class="col-md-5 mb-2">
+                                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" name="login" class="btn btn-primary w-100">Login</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="col-12 text-center text-muted">
+                    <hr>
+                    <span>หรือ สมัครสมาชิกใหม่ด้านล่าง</span>
+                </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">เบอร์โทรศัพท์ <span class="text-muted small">(ไม่บังคับ)</span></label>
-                            <input type="text" name="phone" class="form-control" 
-                                   value="<?php echo htmlspecialchars($old_phone); ?>"
-                                   placeholder="08xxxxxxxx"> 
+                <div class="col-12">
+                    <div class="card p-4 shadow-sm border-0">
+                        <h4 class="mb-3 text-success"><i class="fas fa-user-plus"></i> สมัครสมาชิก</h4>
+                        
+                        <?php if($register_error != ""): ?>
+                            <div class="alert alert-danger border-2 border-danger shadow-sm text-center fw-bold" role="alert">
+                                <i class="fas fa-exclamation-triangle"></i> <?php echo $register_error; ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <form method="post">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                                    <input type="text" name="fullname" class="form-control" 
+                                           value="<?php echo htmlspecialchars($old_fullname); ?>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">เบอร์โทรศัพท์</label>
+                                    <input type="text" name="phone" class="form-control" 
+                                           value="<?php echo htmlspecialchars($old_phone); ?>" placeholder="08xxxxxxxx">
+                                </div>
+                                <div class="col-12 mb-3">
+                                    <label class="form-label">ที่อยู่จัดส่ง</label>
+                                    <textarea name="address" class="form-control" rows="2"><?php echo htmlspecialchars($old_address); ?></textarea>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" name="username" class="form-control <?php echo ($register_error != "") ? 'is-invalid' : ''; ?>" 
+                                           value="<?php echo ($register_success == "") ? htmlspecialchars($old_username) : ''; ?>" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Password <span class="text-danger">*</span></label>
+                                    <input type="password" name="password" class="form-control" required>
+                                </div>
                             </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">ที่อยู่จัดส่ง <span class="text-muted small">(ไม่บังคับ)</span></label>
-                            <textarea name="address" class="form-control" rows="2" placeholder="บ้านเลขที่, ถนน, ตำบล..."><?php echo htmlspecialchars($old_address); ?></textarea>
-                            </div>
-
-                        <hr> <div class="mb-3">
-                            <label class="form-label">Username <span class="text-danger">*</span></label>
-                            <input type="text" name="username" class="form-control <?php echo ($register_error != "") ? 'is-invalid' : ''; ?>" 
-                                   value="<?php echo ($register_success == "") ? htmlspecialchars($old_username) : ''; ?>" 
-                                   placeholder="ภาษาอังกฤษเท่านั้น" required>
-                            
-                            <?php if($register_error != ""): ?>
-                                <div class="invalid-feedback fw-bold">กรุณาเปลี่ยนชื่อผู้ใช้นี้</div>
-                            <?php endif; ?>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Password <span class="text-danger">*</span></label>
-                            <input type="password" name="password" class="form-control" placeholder="ตั้งรหัสผ่าน" required>
-                        </div>
-
-                        <button type="submit" name="register" class="btn btn-success w-100 py-2">สมัครสมาชิก</button>
-                    </form>
+                            <button type="submit" name="register" class="btn btn-success w-100 py-2">สมัครสมาชิก</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
 
+            </div>
         </div>
     </div>
 </body>
