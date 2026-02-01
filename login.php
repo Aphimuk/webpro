@@ -126,7 +126,7 @@ if (isset($_POST['login'])) {
             position: absolute;
             right: 0;
             top: 0;
-            width: 50%;
+            width: 70%;
             height: 100%;
             background: #ffffff;
             display: flex;
