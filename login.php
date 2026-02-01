@@ -2,7 +2,7 @@
 session_start();
 require_once ('connect.php');
 
-// --- 1. PHP Logic (ส่วนจัดการข้อมูลเดิม) ---
+// --- 1. PHP Logic (ส่วนจัดการข้อมูล) ---
 $old_fullname = "";
 $old_username = "";
 $old_address = "";  
@@ -12,12 +12,11 @@ $register_error = "";
 $register_success = ""; 
 $login_error = "";    
 
-// ตัวแปรเช็คว่าควรเปิดหน้า Register ค้างไว้ไหม (ถ้า error หรือเพิ่งกดสมัคร)
 $is_register_active = false;
 
 // 1.1 Logic สมัครสมาชิก
 if (isset($_POST['register'])) {
-    $is_register_active = true; // สั่งให้ CSS เปิดหน้า Register ค้างไว้
+    $is_register_active = true;
 
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password']; 
@@ -42,14 +41,12 @@ if (isset($_POST['register'])) {
                 VALUES ('$user', '$password_hashed', '$name', '$address', '$phone', '$role')";
         
         if($conn->query($sql)){ 
-            $register_success = "✅ สมัครสำเร็จ! กรุณาล็อกอิน";
-            $is_register_active = false; // สมัครผ่าน สลับกลับไปหน้า Login
+            $register_success = "✅ สมัครสำเร็จ! กรุณาเข้าสู่ระบบ";
+            $is_register_active = false; 
             
-            // ล้างค่าเดิม
             $old_fullname = "";
             $old_address = "";
             $old_phone = "";
-            // old_username เก็บไว้เติมช่อง login
         } else {
             $register_error = "Error: " . $conn->error;
         }
@@ -58,7 +55,7 @@ if (isset($_POST['register'])) {
 
 // 1.2 Logic การ Login
 if (isset($_POST['login'])) {
-    $is_register_active = false; // สั่งให้ CSS อยู่หน้า Login
+    $is_register_active = false;
 
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
@@ -94,15 +91,11 @@ if (isset($_POST['login'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Our Site</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>เข้าสู่ระบบ / สมัครสมาชิก</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
-        /* --- CSS Design (Sliding Effect) --- */
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             background: #c9d6ff;
@@ -111,7 +104,7 @@ if (isset($_POST['login'])) {
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            font-family: 'Montserrat', sans-serif;
+            font-family: 'Sarabun', sans-serif; /* ใช้ฟอนต์ไทย */
             height: 100vh;
             margin: 0;
         }
@@ -122,52 +115,46 @@ if (isset($_POST['login'])) {
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.35);
             position: relative;
             overflow: hidden;
-            width: 900px; /* ความกว้างของกล่องหลัก */
+            width: 900px;
             max-width: 100%;
-            min-height: 550px; /* ความสูง */
+            min-height: 550px;
         }
 
         .container p {
-            font-size: 14px;
-            line-height: 20px;
-            letter-spacing: 0.3px;
+            font-size: 16px; /* ปรับตัวหนังสือให้อ่านง่ายขึ้น */
+            line-height: 24px;
             margin: 20px 0;
         }
 
-        .container span {
-            font-size: 12px;
-        }
+        .container span { font-size: 14px; margin-bottom: 10px; display: block;}
 
         .container a {
             color: #333;
-            font-size: 13px;
+            font-size: 14px;
             text-decoration: none;
             margin: 15px 0 10px;
+            font-weight: bold;
         }
+        
+        .container a:hover { text-decoration: underline; color: #512da8; }
 
         .container button {
-            background-color: #512da8; /* สีปุ่มหลัก */
+            background-color: #512da8;
             color: #fff;
-            font-size: 12px;
+            font-size: 14px;
             padding: 10px 45px;
             border: 1px solid transparent;
             border-radius: 8px;
             font-weight: 600;
-            letter-spacing: 0.5px;
             text-transform: uppercase;
             margin-top: 10px;
             cursor: pointer;
             transition: 0.3s;
+            font-family: 'Sarabun', sans-serif;
         }
 
-        .container button:hover {
-            background-color: #311b92;
-        }
-
-        .container button.hidden {
-            background-color: transparent;
-            border-color: #fff;
-        }
+        .container button:hover { background-color: #311b92; }
+        .container button.ghost { background-color: transparent; border-color: #fff; }
 
         .container form {
             background-color: #fff;
@@ -177,17 +164,19 @@ if (isset($_POST['login'])) {
             flex-direction: column;
             padding: 0 40px;
             height: 100%;
+            text-align: center;
         }
 
         .container input {
             background-color: #eee;
             border: none;
             margin: 8px 0;
-            padding: 10px 15px;
-            font-size: 13px;
+            padding: 12px 15px;
+            font-size: 14px;
             border-radius: 8px;
             width: 100%;
             outline: none;
+            font-family: 'Sarabun', sans-serif;
         }
 
         .form-container {
@@ -197,29 +186,11 @@ if (isset($_POST['login'])) {
             transition: all 0.6s ease-in-out;
         }
 
-        /* --- LOGIC การสลับหน้า --- */
-        
-        /* หน้า Login (Sign In) */
-        .sign-in-container {
-            left: 0;
-            width: 50%;
-            z-index: 2;
-        }
+        /* Logic สลับหน้า */
+        .sign-in-container { left: 0; width: 50%; z-index: 2; }
+        .container.right-panel-active .sign-in-container { transform: translateX(100%); }
 
-        /* เมื่อกดสลับ หน้า Login จะเลื่อนออก */
-        .container.right-panel-active .sign-in-container {
-            transform: translateX(100%);
-        }
-
-        /* หน้า Register (Sign Up) */
-        .sign-up-container {
-            left: 0;
-            width: 50%;
-            opacity: 0;
-            z-index: 1;
-        }
-
-        /* เมื่อกดสลับ หน้า Register จะเลื่อนเข้ามาและแสดงผล */
+        .sign-up-container { left: 0; width: 50%; opacity: 0; z-index: 1; }
         .container.right-panel-active .sign-up-container {
             transform: translateX(100%);
             opacity: 1;
@@ -232,7 +203,7 @@ if (isset($_POST['login'])) {
             50%, 100% { opacity: 1; z-index: 5; }
         }
 
-        /* --- OVERLAY (แผ่นสีฟ้าที่เลื่อนไปมา) --- */
+        /* Overlay */
         .overlay-container {
             position: absolute;
             top: 0;
@@ -244,12 +215,10 @@ if (isset($_POST['login'])) {
             z-index: 100;
         }
 
-        .container.right-panel-active .overlay-container {
-            transform: translateX(-100%);
-        }
+        .container.right-panel-active .overlay-container { transform: translateX(-100%); }
 
         .overlay {
-            background: #512da8; /* สีพื้นหลังแผ่นสไลด์ */
+            background: #512da8;
             background: -webkit-linear-gradient(to right, #5c6bc0, #512da8);
             background: linear-gradient(to right, #5c6bc0, #512da8);
             background-repeat: no-repeat;
@@ -264,9 +233,7 @@ if (isset($_POST['login'])) {
             transition: transform 0.6s ease-in-out;
         }
 
-        .container.right-panel-active .overlay {
-            transform: translateX(50%);
-        }
+        .container.right-panel-active .overlay { transform: translateX(50%); }
 
         .overlay-panel {
             position: absolute;
@@ -283,65 +250,23 @@ if (isset($_POST['login'])) {
             transition: transform 0.6s ease-in-out;
         }
 
-        .overlay-left {
-            transform: translateX(-20%);
-        }
+        .overlay-left { transform: translateX(-20%); }
+        .container.right-panel-active .overlay-left { transform: translateX(0); }
+        .overlay-right { right: 0; transform: translateX(0); }
+        .container.right-panel-active .overlay-right { transform: translateX(20%); }
 
-        .container.right-panel-active .overlay-left {
-            transform: translateX(0);
-        }
+        /* Text colors */
+        .alert-text { color: #e74c3c; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .success-text { color: #2ecc71; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
 
-        .overlay-right {
-            right: 0;
-            transform: translateX(0);
-        }
-
-        .container.right-panel-active .overlay-right {
-            transform: translateX(20%);
-        }
-
-        /* Social Icons */
-        .social-container {
-            margin: 20px 0;
-        }
-        .social-container a {
-            border: 1px solid #ddd;
-            border-radius: 50%;
-            display: inline-flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0 5px;
-            height: 40px;
-            width: 40px;
-            color: #333;
-        }
-
-        /* Error Messages */
-        .alert-text {
-            color: #e74c3c;
-            font-size: 12px;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-        .success-text {
-            color: #2ecc71;
-            font-size: 12px;
-            margin-bottom: 10px;
-            font-weight: bold;
-        }
-
-        /* Mobile Responsive */
+        /* Responsive */
         @media (max-width: 768px) {
             .container { width: 100%; min-height: 800px; border-radius: 0; }
             .form-container { width: 100%; }
             .sign-in-container { top: 0; height: 50%; }
             .sign-up-container { bottom: 0; top: auto; height: 50%; opacity: 1; z-index: 1; transform: none !important;}
-            .overlay-container { display: none; } /* ซ่อน Animation บนมือถือเพราะพื้นที่มีน้อย */
-            
-            /* ปรับ CSS แบบง่ายสำหรับมือถือคือโชว์ทั้งคู่ */
-            .sign-in-container, .sign-up-container {
-                position: relative; width: 100%; height: auto; padding: 20px 0;
-            }
+            .overlay-container { display: none; }
+            .sign-in-container, .sign-up-container { position: relative; width: 100%; height: auto; padding: 20px 0; }
         }
     </style>
 </head>
@@ -351,40 +276,28 @@ if (isset($_POST['login'])) {
         
         <div class="form-container sign-up-container">
             <form method="post">
-                <h1>Create Account</h1>
-                
-                <div class="social-container">
-                    <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
-                    <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-                <span>or use your email for registration</span>
+                <h1>สมัครสมาชิก</h1>
+                <span class="mb-2">กรอกข้อมูลของคุณเพื่อใช้งานระบบ</span>
                 
                 <?php if($register_error != ""): ?>
                     <div class="alert-text"><?php echo $register_error; ?></div>
                 <?php endif; ?>
 
-                <input type="text" name="fullname" placeholder="Name" value="<?php echo htmlspecialchars($old_fullname); ?>" required />
-                <input type="text" name="username" placeholder="Username" value="<?php echo htmlspecialchars($old_username); ?>" required />
-                <input type="password" name="password" placeholder="Password" required />
+                <input type="text" name="fullname" placeholder="ชื่อ-นามสกุล" value="<?php echo htmlspecialchars($old_fullname); ?>" required />
+                <input type="text" name="username" placeholder="ชื่อผู้ใช้ (Username)" value="<?php echo htmlspecialchars($old_username); ?>" required />
+                <input type="password" name="password" placeholder="รหัสผ่าน" required />
                 
-                <input type="text" name="phone" placeholder="Phone (Optional)" value="<?php echo htmlspecialchars($old_phone); ?>" />
-                <input type="text" name="address" placeholder="Address (Optional)" value="<?php echo htmlspecialchars($old_address); ?>" />
+                <input type="text" name="phone" placeholder="เบอร์โทรศัพท์ (ถ้ามี)" value="<?php echo htmlspecialchars($old_phone); ?>" />
+                <input type="text" name="address" placeholder="ที่อยู่ (ถ้ามี)" value="<?php echo htmlspecialchars($old_address); ?>" />
 
-                <button type="submit" name="register">Sign Up</button>
+                <button type="submit" name="register">ยืนยันการสมัคร</button>
             </form>
         </div>
 
         <div class="form-container sign-in-container">
             <form method="post">
-                <h1>Sign in</h1>
-                
-                <div class="social-container">
-                    <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
-                    <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
-                </div>
-                <span>or use your account</span>
+                <h1>เข้าสู่ระบบ</h1>
+                <span class="mb-2">ยินดีต้อนรับกลับมาอีกครั้ง</span>
                 
                 <?php if($register_success != ""): ?>
                     <div class="success-text"><?php echo $register_success; ?></div>
@@ -393,11 +306,12 @@ if (isset($_POST['login'])) {
                     <div class="alert-text"><?php echo $login_error; ?></div>
                 <?php endif; ?>
 
-                <input type="text" name="username" placeholder="Username" value="<?php echo ($register_success != "") ? htmlspecialchars($old_username) : ''; ?>" required />
-                <input type="password" name="password" placeholder="Password" required />
+                <input type="text" name="username" placeholder="ชื่อผู้ใช้ (Username)" value="<?php echo ($register_success != "") ? htmlspecialchars($old_username) : ''; ?>" required />
+                <input type="password" name="password" placeholder="รหัสผ่าน" required />
                 
-                <a href="#">Forgot your password?</a>
-                <button type="submit" name="login">Sign In</button>
+                <a href="forgot_password.php">ลืมรหัสผ่านใช่ไหม?</a>
+                
+                <button type="submit" name="login">เข้าสู่ระบบ</button>
             </form>
         </div>
 
@@ -405,16 +319,17 @@ if (isset($_POST['login'])) {
             <div class="overlay">
                 
                 <div class="overlay-panel overlay-left">
-                    <h1>Welcome Back!</h1>
-                    <p>To keep connected with us please login with your personal info</p>
-                    <button class="ghost" id="signIn">Sign In</button>
+                    <h1>ยินดีต้อนรับกลับมา!</h1>
+                    <p>เพื่อเชื่อมต่อกับเราเสมอ<br>โปรดเข้าสู่ระบบด้วยข้อมูลส่วนตัวของคุณ</p>
+                    <button class="ghost" id="signIn">ไปที่หน้าเข้าสู่ระบบ</button>
                 </div>
                 
                 <div class="overlay-panel overlay-right">
-                    <h1>Hello, Friend!</h1>
-                    <p>Enter your personal details and start journey with us</p>
-                    <button class="ghost" id="signUp">Sign Up</button>
+                    <h1>สวัสดีเพื่อนใหม่!</h1>
+                    <p>กรอกข้อมูลส่วนตัวของคุณ<br>แล้วมาเริ่มต้นเดินทางไปกับเรา</p>
+                    <button class="ghost" id="signUp">ไปที่หน้าสมัครสมาชิก</button>
                 </div>
+
             </div>
         </div>
     </div>
@@ -424,12 +339,10 @@ if (isset($_POST['login'])) {
         const signInButton = document.getElementById('signIn');
         const container = document.getElementById('container');
 
-        // เมือกดปุ่ม Sign Up (ในแผ่น overlay) ให้เลื่อนแผ่นไปซ้าย
         signUpButton.addEventListener('click', () => {
             container.classList.add("right-panel-active");
         });
 
-        // เมือกดปุ่ม Sign In (ในแผ่น overlay) ให้เลื่อนแผ่นกลับมาขวา
         signInButton.addEventListener('click', () => {
             container.classList.remove("right-panel-active");
         });
