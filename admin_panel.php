@@ -7,18 +7,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 }
 
 // --------------------------------------------------------
-// 1. Logic ลบสินค้า (พร้อมลบรูปภาพ)
+// 1. Logic ลบสินค้า (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
-    
-    // ลบไฟล์รูปภาพ
     $res_imgs = $conn->query("SELECT image_file FROM product_images WHERE product_id=$pid");
-    while($r = $res_imgs->fetch_assoc()){ 
-        @unlink("img/" . $r['image_file']); 
-    }
-    
-    // ลบข้อมูลในฐานข้อมูล
+    while($r = $res_imgs->fetch_assoc()){ @unlink("img/" . $r['image_file']); }
     $conn->query("DELETE FROM product_images WHERE product_id=$pid");
     $conn->query("DELETE FROM products WHERE product_id=$pid");
     
@@ -29,12 +23,11 @@ if (isset($_GET['delete_product'])) {
 }
 
 // --------------------------------------------------------
-// 2. Logic หมวดหมู่สินค้า
+// 2. Logic หมวดหมู่ (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_POST['add_category'])) {
     $c_name = $_POST['cat_name'];
     $conn->query("INSERT INTO categories (category_name) VALUES ('$c_name')");
-    
     $_SESSION['alert_msg'] = "✅ เพิ่มหมวดหมู่ '$c_name' สำเร็จ";
     $_SESSION['alert_type'] = "success";
     header("Location: admin_panel.php?page=categories");
@@ -43,7 +36,6 @@ if (isset($_POST['add_category'])) {
 if (isset($_GET['delete_cat'])) {
     $cid = $_GET['delete_cat'];
     $conn->query("DELETE FROM categories WHERE category_id=$cid"); 
-    
     $_SESSION['alert_msg'] = "🗑️ ลบหมวดหมู่เรียบร้อย";
     $_SESSION['alert_type'] = "warning";
     header("Location: admin_panel.php?page=categories");
@@ -51,13 +43,12 @@ if (isset($_GET['delete_cat'])) {
 }
 
 // --------------------------------------------------------
-// 3. Logic อัปเดตสถานะออเดอร์
+// 3. Logic อัปเดตสถานะออเดอร์ (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_POST['update_status'])) {
     $oid = $_POST['order_id'];
     $st = $_POST['status'];
     $conn->query("UPDATE orders SET status='$st' WHERE order_id=$oid");
-    
     $_SESSION['alert_msg'] = "✅ อัปเดตสถานะออเดอร์ #$oid เป็น $st เรียบร้อย";
     $_SESSION['alert_type'] = "info";
     header("Location: admin_panel.php?page=orders");
@@ -65,38 +56,48 @@ if (isset($_POST['update_status'])) {
 }
 
 // --------------------------------------------------------
-// 4. Logic ลบลูกค้า (จุดที่แก้ไข!)
+// 4. Logic ลบลูกค้า (แก้ไขใหม่ตามโจทย์)
 // --------------------------------------------------------
 if (isset($_GET['delete_user'])) {
     $uid = $_GET['delete_user'];
     
-    // ขั้นตอนที่ 1: หาออเดอร์ของลูกค้าคนนี้
-    $get_orders = $conn->query("SELECT order_id FROM orders WHERE user_id=$uid");
+    // ขั้นตอนที่ 1: ลบเฉพาะออเดอร์ที่สถานะเป็น 'cancelled' (ยกเลิก) ทิ้งไปก่อน
+    $get_cancelled = $conn->query("SELECT order_id FROM orders WHERE user_id=$uid AND status='cancelled'");
+    $deleted_count = 0;
     
-    // ขั้นตอนที่ 2: ลบรายละเอียดในออเดอร์ (Order Details)
-    while($row = $get_orders->fetch_assoc()){
+    while($row = $get_cancelled->fetch_assoc()){
         $oid = $row['order_id'];
+        // ลบรายละเอียดในออเดอร์นั้น
         $conn->query("DELETE FROM order_details WHERE order_id=$oid");
+        // ลบตัวออเดอร์
+        $conn->query("DELETE FROM orders WHERE order_id=$oid");
+        $deleted_count++;
     }
 
-    // ขั้นตอนที่ 3: ลบออเดอร์หลัก (Orders)
-    $conn->query("DELETE FROM orders WHERE user_id=$uid");
+    // ขั้นตอนที่ 2: เช็คว่าเหลือออเดอร์สำคัญ (Pending, Cooking, Completed) ไหม?
+    $check_remaining = $conn->query("SELECT COUNT(*) as count FROM orders WHERE user_id=$uid");
+    $remaining = $check_remaining->fetch_assoc()['count'];
 
-    // ขั้นตอนที่ 4: ลบชื่อลูกค้า
-    if($conn->query("DELETE FROM users WHERE user_id=$uid")){
-        $_SESSION['alert_msg'] = "✅ ลบลูกค้าเรียบร้อย (ล้างข้อมูลเก่าให้หมดแล้ว)";
-        $_SESSION['alert_type'] = "success";
+    if ($remaining > 0) {
+        // กรณีที่ 1: ยังมีออเดอร์สำคัญเหลืออยู่ -> ไม่ลบลูกค้า แต่แจ้งว่าเคลียร์ประวัติยกเลิกให้แล้ว
+        $_SESSION['alert_msg'] = "⚠️ ระบบลบเฉพาะประวัติที่ 'ยกเลิก' ออกให้แล้ว ($deleted_count รายการ)<br>แต่ยังไม่ลบข้อมูลลูกค้า เนื่องจากยังมีประวัติการซื้อขายที่เสร็จสิ้น/ค้างอยู่ครับ";
+        $_SESSION['alert_type'] = "warning";
     } else {
-        // ถ้าลบไม่ได้ ให้แจ้ง Error ออกมา
-        $_SESSION['alert_msg'] = "❌ ลบไม่ได้ เกิดข้อผิดพลาด: " . $conn->error;
-        $_SESSION['alert_type'] = "danger";
+        // กรณีที่ 2: ไม่เหลือออเดอร์แล้ว (หรือมีแต่ยกเลิกซึ่งลบไปหมดแล้ว) -> ลบลูกค้าได้เลย
+        if($conn->query("DELETE FROM users WHERE user_id=$uid")){
+            $_SESSION['alert_msg'] = "✅ ลบลูกค้าออกจากระบบเรียบร้อยแล้ว " . ($deleted_count > 0 ? "(พร้อมเคลียร์ประวัติยกเลิก $deleted_count รายการ)" : "");
+            $_SESSION['alert_type'] = "success";
+        } else {
+            $_SESSION['alert_msg'] = "❌ ลบลูกค้าไม่ได้: " . $conn->error;
+            $_SESSION['alert_type'] = "danger";
+        }
     }
     
     header("Location: admin_panel.php?page=customers");
     exit();
 }
 
-// เตรียมตัวแปรสำหรับแสดงผล
+// เตรียมตัวแปร
 $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 ?>
@@ -110,7 +111,7 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #FFF8E7; } /* พื้นหลังครีม */
+        body { font-family: 'Sarabun', sans-serif; background-color: #FFF8E7; }
         .sidebar { background-color: #263238; min-height: 100vh; color: white; }
         .nav-link { color: #cfd8dc; margin-bottom: 5px; border-radius: 5px; transition: 0.3s; }
         .nav-link:hover, .nav-link.active { background-color: #FF6D00; color: white; padding-left: 20px; }
@@ -120,7 +121,9 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
     </style>
 </head>
 <body>
-    <?php include 'navbar.php'; ?> <div class="container-fluid">
+    <?php include 'navbar.php'; ?>
+
+    <div class="container-fluid">
         <div class="row">
             <div class="col-md-2 sidebar p-3">
                 <h5 class="text-warning text-center py-3 border-bottom border-secondary">
@@ -159,7 +162,6 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                                 <?php
                                 $res = $conn->query("SELECT o.*, u.username FROM orders o JOIN users u ON o.user_id = u.user_id ORDER BY o.order_id DESC");
                                 while($row = $res->fetch_assoc()){
-                                    // สีสถานะ
                                     $st_color = 'secondary';
                                     if($row['status']=='pending') $st_color='warning text-dark';
                                     if($row['status']=='cooking') $st_color='info text-dark';
@@ -265,7 +267,7 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                                         <td>{$row['fullname']}</td>
                                         <td>{$row['phone']}</td>
                                         <td>
-                                            <a href='admin_panel.php?delete_user={$row['user_id']}' class='btn btn-danger btn-sm px-3' onclick='return confirm(\"ต้องการลบลูกค้ารายนี้รวมถึงประวัติทั้งหมด?\")'>
+                                            <a href='admin_panel.php?delete_user={$row['user_id']}' class='btn btn-danger btn-sm px-3' onclick='return confirm(\"ระบบจะลบเฉพาะประวัติที่ยกเลิก และจะลบลูกค้าหากไม่มีออเดอร์ค้างอยู่ ยืนยัน?\")'>
                                                 <i class='fas fa-trash-alt'></i> ลบ
                                             </a>
                                         </td>
