@@ -16,7 +16,6 @@ if (isset($_GET['search']) && $_GET['search'] != "") {
 
 $sql_products = "SELECT * FROM products $where_sql ORDER BY product_id DESC";
 $result_products = $conn->query($sql_products);
-
 $sql_cats = "SELECT * FROM categories";
 $result_cats = $conn->query($sql_cats);
 ?>
@@ -106,8 +105,8 @@ $result_cats = $conn->query($sql_cats);
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100 shadow-sm">
                                     <?php 
-                                        // ตรวจสอบรูปภาพ
-                                        $img_show = !empty($row['image_file']) ? "uploads/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
+                                        // เปลี่ยนเป็น img/
+                                        $img_show = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
                                     ?>
                                     <img src="<?php echo $img_show; ?>" class="card-img-top" alt="รูปอาหาร">
                                     <div class="card-body">

@@ -8,33 +8,30 @@ if (isset($_POST['submit'])) {
     $price = $_POST['price'];
     $cat_id = $_POST['category_id'];
     
-    // 1. Insert ข้อมูลสินค้าลงไปก่อน เพื่อเอา product_id
-    // (เรายังเก็บ image_file ไว้ในตารางหลักเผื่อใช้เป็นรูปหน้าปกรูปแรก)
+    // 1. Insert ข้อมูลสินค้าลงไปก่อน
     $sql = "INSERT INTO products (product_name, description, price, category_id) 
             VALUES ('$name', '$desc', '$price', '$cat_id')";
 
     if ($conn->query($sql) === TRUE) {
         $last_id = $conn->insert_id; // ได้ ID สินค้าล่าสุดมา
         
-        // 2. จัดการอัปโหลดรูปภาพหลายรูป
-        $target_dir = "uploads/";
+        // --- แก้ไขตรงนี้: เปลี่ยนโฟลเดอร์เป็น img/ ---
+        $target_dir = "img/";
+        // ถ้ายังไม่มีโฟลเดอร์ img ให้สร้างให้อัตโนมัติ
         if (!file_exists($target_dir)) { mkdir($target_dir, 0777, true); }
 
         $countfiles = count($_FILES['product_images']['name']);
         
-        // วนลูปรูปภาพทั้งหมดที่ส่งมา
         for($i = 0; $i < $countfiles; $i++){
             $filename = basename($_FILES['product_images']['name'][$i]);
             
             if($filename != ""){
                 $target_file = $target_dir . $filename;
-                // อัปโหลดไฟล์
+                
                 if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
-                    // Insert ลงตาราง product_images
                     $sql_img = "INSERT INTO product_images (product_id, image_file) VALUES ('$last_id', '$filename')";
                     $conn->query($sql_img);
 
-                    // อัปเดตตาราง products ให้มีรูปปก (เอารูปแรกที่อัปโหลด)
                     if($i == 0){
                         $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$last_id'");
                     }
@@ -61,7 +58,7 @@ if (isset($_POST['submit'])) {
 <div class="container mt-5">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
-            <h4>เพิ่มเมนูอาหารใหม่ (รองรับหลายรูป)</h4>
+            <h4>เพิ่มเมนูอาหารใหม่ (โฟลเดอร์ img)</h4>
         </div>
         <div class="card-body">
             <form action="" method="post" enctype="multipart/form-data">

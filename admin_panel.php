@@ -9,20 +9,20 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 // --- Logic จัดการสินค้า (Delete) ---
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
-    // ลบรูปภาพจาก Server ด้วย (Optional: ถ้าต้องการลบไฟล์ขยะ)
+    
+    // ลบไฟล์รูปภาพจากโฟลเดอร์ img/
     $res_imgs = $conn->query("SELECT image_file FROM product_images WHERE product_id=$pid");
     while($r = $res_imgs->fetch_assoc()){
-        @unlink("uploads/" . $r['image_file']);
+        @unlink("img/" . $r['image_file']);
     }
     
-    // ลบข้อมูลใน DB (Constraint Cascade จะลบใน product_images ให้เอง แต่เราเขียนเผื่อไว้)
     $conn->query("DELETE FROM product_images WHERE product_id=$pid");
     $conn->query("DELETE FROM products WHERE product_id=$pid");
     
     header("Location: admin_panel.php?page=products");
 }
 
-// --- Logic จัดการประเภทสินค้า (Add/Delete) ---
+// --- Logic จัดการประเภทสินค้า ---
 if (isset($_POST['add_category'])) {
     $c_name = $_POST['cat_name'];
     $conn->query("INSERT INTO categories (category_name) VALUES ('$c_name')");
@@ -30,7 +30,6 @@ if (isset($_POST['add_category'])) {
 }
 if (isset($_GET['delete_cat'])) {
     $cid = $_GET['delete_cat'];
-    // เพื่อป้องกัน Error ถ้ามีสินค้าผูกอยู่ ควรเช็คก่อน (แต่ตามโจทย์ให้ลบได้เลย)
     $conn->query("DELETE FROM categories WHERE category_id=$cid"); 
     header("Location: admin_panel.php?page=categories");
 }
@@ -122,7 +121,9 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                         $sql = "SELECT * FROM products WHERE product_name LIKE '%$search%' ORDER BY product_id DESC";
                         $res = $conn->query($sql);
                         while($row = $res->fetch_assoc()){
-                            $img_src = !empty($row['image_file']) ? "uploads/".$row['image_file'] : "https://via.placeholder.com/50";
+                            // --- แก้ไขตรงนี้: ชี้ไปที่ img/ ---
+                            $img_src = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/50";
+                            
                             echo "<tr>
                                 <td>{$row['product_id']}</td>
                                 <td><img src='$img_src' width='50' height='50' style='object-fit:cover;'></td>
@@ -136,7 +137,7 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                         }
                         ?>
                     </table>
-
+                
                 <?php elseif($page == 'categories'): ?>
                     <h3>จัดการประเภทสินค้า</h3>
                     <form method="post" class="row g-3 mb-4">
@@ -164,8 +165,8 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                     </table>
 
                 <?php elseif($page == 'customers'): ?>
-                    <h3>จัดการลูกค้า</h3>
-                    <table class="table">
+                   <h3>จัดการลูกค้า</h3>
+                   <table class="table">
                         <thead><tr><th>ID</th><th>Username</th><th>ชื่อจริง</th><th>เบอร์โทร</th><th>จัดการ</th></tr></thead>
                         <?php
                         $res = $conn->query("SELECT * FROM users WHERE role='customer'");

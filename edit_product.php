@@ -1,7 +1,6 @@
 <?php
 require_once ('connect.php');
 
-// 1. รับค่า ID ที่จะแก้ไข
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     $sql = "SELECT * FROM products WHERE product_id = $id";
@@ -9,23 +8,21 @@ if (isset($_GET['id'])) {
     $product = $result->fetch_assoc();
 }
 
-// 2. Logic จัดการรูปภาพ (ลบรูปทั้งหมด)
+// Logic จัดการรูปภาพ (ลบรูปทั้งหมด)
 if(isset($_POST['delete_images'])){
     $id = $_POST['product_id'];
-    // ลบไฟล์จริง
     $res = $conn->query("SELECT image_file FROM product_images WHERE product_id=$id");
     while($r = $res->fetch_assoc()){
-        @unlink("uploads/" . $r['image_file']);
+        @unlink("img/" . $r['image_file']); // ลบจากโฟลเดอร์ img
     }
-    // ลบใน DB
+    
     $conn->query("DELETE FROM product_images WHERE product_id=$id");
-    // ลบปกใน products
     $conn->query("UPDATE products SET image_file='' WHERE product_id=$id");
     
     echo "<script>alert('ลบรูปภาพทั้งหมดแล้ว'); window.location='edit_product.php?id=$id';</script>";
 }
 
-// 3. บันทึกข้อมูลเมื่อกดปุ่ม Update
+// บันทึกข้อมูลเมื่อกดปุ่ม Update
 if (isset($_POST['update'])) {
     $id = $_POST['product_id'];
     $name = $_POST['product_name'];
@@ -33,13 +30,12 @@ if (isset($_POST['update'])) {
     $cat_id = $_POST['category_id'];
     $desc = $_POST['description'];
 
-    // Update ข้อมูลพื้นฐาน
     $sql = "UPDATE products SET product_name='$name', price='$price', category_id='$cat_id', description='$desc' WHERE product_id=$id";
     $conn->query($sql);
 
-    // ถ้ามีการอัปโหลดรูปภาพเพิ่ม (Multiple)
+    // ถ้ามีการอัปโหลดรูปภาพเพิ่ม
     if (!empty(array_filter($_FILES['product_images']['name']))) {
-        $target_dir = "uploads/";
+        $target_dir = "img/"; // เปลี่ยนเป็น img
         $countfiles = count($_FILES['product_images']['name']);
 
         for($i = 0; $i < $countfiles; $i++){
@@ -49,7 +45,6 @@ if (isset($_POST['update'])) {
                 if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
                     $conn->query("INSERT INTO product_images (product_id, image_file) VALUES ('$id', '$filename')");
                     
-                    // อัปเดตปกถ้ายังไม่มี
                     $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$id' AND (image_file IS NULL OR image_file='')");
                 }
             }
@@ -104,7 +99,8 @@ if (isset($_POST['update'])) {
                             $imgs = $conn->query("SELECT * FROM product_images WHERE product_id=".$product['product_id']);
                             if($imgs->num_rows > 0){
                                 while($img = $imgs->fetch_assoc()){
-                                    echo "<img src='uploads/{$img['image_file']}' class='m-1 border' style='height: 80px;'>";
+                                    // เปลี่ยนเป็น img/
+                                    echo "<img src='img/{$img['image_file']}' class='m-1 border' style='height: 80px;'>";
                                 }
                             } else {
                                 echo "ไม่มีรูปภาพ";

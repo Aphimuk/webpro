@@ -21,7 +21,7 @@ if (isset($_GET['id'])) {
         $images[] = $row_img['image_file'];
     }
     
-    // ถ้าไม่มีรูปในตารางใหม่ ให้ใช้รูปจากตาราง products เดิม (กันเหนียว)
+    // ถ้าไม่มีรูปในตารางใหม่ ให้ใช้รูปจากตาราง products เดิม
     if(count($images) == 0 && !empty($product['image_file'])){
         $images[] = $product['image_file'];
     }
@@ -66,7 +66,7 @@ if (isset($_GET['id'])) {
                             <?php if(count($images) > 0): ?>
                                 <?php foreach($images as $index => $img): ?>
                                     <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
-                                        <img src="uploads/<?php echo $img; ?>" class="d-block w-100" alt="Product Image">
+                                        <img src="img/<?php echo $img; ?>" class="d-block w-100" alt="Product Image">
                                     </div>
                                 <?php endforeach; ?>
                             <?php else: ?>
