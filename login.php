@@ -2,12 +2,15 @@
 session_start();
 require_once ('connect.php');
 
-// กำหนดตัวแปรสำหรับเก็บค่าต่างๆ
+// กำหนดตัวแปรสำหรับเก็บค่าเดิม (เพิ่มที่อยู่และเบอร์โทร)
 $old_fullname = "";
-$old_username = ""; // เก็บค่า Username ที่เพิ่งสมัคร
-$register_error = ""; // เก็บข้อความ Error สมัครสมาชิก
-$register_success = ""; // เก็บข้อความ Success สมัครสำเร็จ
-$login_error = "";    // เก็บข้อความ Error ล็อกอิน
+$old_username = "";
+$old_address = "";  // * ใหม่
+$old_phone = "";    // * ใหม่
+
+$register_error = ""; 
+$register_success = ""; 
+$login_error = "";    
 
 // 1. Logic การสมัครสมาชิก
 if (isset($_POST['register'])) {
@@ -15,38 +18,48 @@ if (isset($_POST['register'])) {
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password']; 
     $name = $conn->real_escape_string($_POST['fullname']);
+    
+    // * รับค่าใหม่ (ที่อยู่ & เบอร์โทร)
+    $address = $conn->real_escape_string($_POST['address']);
+    $phone = $conn->real_escape_string($_POST['phone']);
+    
     $role = 'customer'; 
 
-    // **เก็บค่าที่ user พิมพ์มาใส่ตัวแปรไว้ (เผื่อต้องแก้)**
+    // **เก็บค่าเดิมไว้ส่งกลับหน้าฟอร์ม (รวมถึงฟิลด์ใหม่ด้วย)**
     $old_fullname = $name;
     $old_username = $user;
+    $old_address = $address;
+    $old_phone = $phone;
 
     // ตรวจสอบ Username ซ้ำ
     $check_sql = "SELECT username FROM users WHERE username = '$user'";
     $check_result = $conn->query($check_sql);
 
     if ($check_result->num_rows > 0) {
-        // **กรณีชื่อซ้ำ: กำหนดข้อความ Error สีแดง**
         $register_error = "⚠️ Username '$user' มีผู้ใช้งานแล้ว! กรุณาเปลี่ยนชื่อใหม่";
     } else {
-        // ถ้าไม่ซ้ำ -> เข้ารหัสและบันทึก
+        // เข้ารหัสรหัสผ่าน
         $password_hashed = password_hash($pass, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO users (username, password, fullname, role) VALUES ('$user', '$password_hashed', '$name', '$role')";
+        
+        // * อัปเดตคำสั่ง INSERT ให้บันทึกที่อยู่และเบอร์โทร
+        $sql = "INSERT INTO users (username, password, fullname, address, phone, role) 
+                VALUES ('$user', '$password_hashed', '$name', '$address', '$phone', '$role')";
         
         if($conn->query($sql)){ 
-            // **กรณีสำเร็จ: กำหนดข้อความ Success สีเขียว**
             $register_success = "✅ สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ";
             
-            // ล้างค่าเดิมในฝั่งสมัคร (เพื่อให้ดูสะอาดตา)
+            // สมัครผ่านแล้ว ล้างค่าเดิมทิ้ง
             $old_fullname = "";
-            // แต่เราอาจจะเก็บ old_username ไว้ เพื่อเอาไปเติมในช่อง Login ให้อัตโนมัติ (Option เสริม)
+            $old_address = "";
+            $old_phone = "";
+            // old_username เก็บไว้เติมช่อง login เหมือนเดิม
         } else {
             $register_error = "เกิดข้อผิดพลาดระบบ: " . $conn->error;
         }
     }
 }
 
-// 2. Logic การ Login
+// 2. Logic การ Login (เหมือนเดิม)
 if (isset($_POST['login'])) {
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
@@ -135,13 +148,26 @@ if (isset($_POST['login'])) {
 
                     <form method="post">
                         <div class="mb-3">
-                            <label class="form-label">ชื่อ-นามสกุล</label>
+                            <label class="form-label">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
                             <input type="text" name="fullname" class="form-control" 
                                    value="<?php echo htmlspecialchars($old_fullname); ?>" 
-                                   placeholder="เช่น สมชาย ใจดี" required>
+                                   required>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Username (สำหรับล็อกอิน)</label>
+                            <label class="form-label">เบอร์โทรศัพท์ <span class="text-muted small">(ไม่บังคับ)</span></label>
+                            <input type="text" name="phone" class="form-control" 
+                                   value="<?php echo htmlspecialchars($old_phone); ?>"
+                                   placeholder="08xxxxxxxx"> 
+                            </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">ที่อยู่จัดส่ง <span class="text-muted small">(ไม่บังคับ)</span></label>
+                            <textarea name="address" class="form-control" rows="2" placeholder="บ้านเลขที่, ถนน, ตำบล..."><?php echo htmlspecialchars($old_address); ?></textarea>
+                            </div>
+
+                        <hr> <div class="mb-3">
+                            <label class="form-label">Username <span class="text-danger">*</span></label>
                             <input type="text" name="username" class="form-control <?php echo ($register_error != "") ? 'is-invalid' : ''; ?>" 
                                    value="<?php echo ($register_success == "") ? htmlspecialchars($old_username) : ''; ?>" 
                                    placeholder="ภาษาอังกฤษเท่านั้น" required>
@@ -150,10 +176,12 @@ if (isset($_POST['login'])) {
                                 <div class="invalid-feedback fw-bold">กรุณาเปลี่ยนชื่อผู้ใช้นี้</div>
                             <?php endif; ?>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
+                            <label class="form-label">Password <span class="text-danger">*</span></label>
                             <input type="password" name="password" class="form-control" placeholder="ตั้งรหัสผ่าน" required>
                         </div>
+
                         <button type="submit" name="register" class="btn btn-success w-100 py-2">สมัครสมาชิก</button>
                     </form>
                 </div>
