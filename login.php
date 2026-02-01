@@ -241,7 +241,7 @@ if (isset($_POST['login'])) {
                 
                 <div class="overlay-panel overlay-right">
                     <h1>ยินดีต้อนรับสู่ร้านบักปึก!</h1>
-                    <p>เข้าสู่ระบบ<br>แล้วมาอร่อยไปด้วยกัน</p>
+                    <p>เข้าสู่ระบบ<br>แล้วมาดูกันว่าอะไรอร่อยสุด</p>
                     <button class="ghost" id="signUp">ไปที่หน้าสมัครสมาชิก</button>
                 </div>
             </div>
