@@ -10,23 +10,21 @@ if (isset($_POST['reset_password'])) {
     $phone = $conn->real_escape_string($_POST['phone']);
     $new_pass = $_POST['new_password'];
 
-    // 1. ตรวจสอบว่า Username และ เบอร์โทร ตรงกันไหม
+    // เช็คข้อมูล
     $sql_check = "SELECT * FROM users WHERE username = '$user' AND phone = '$phone'";
     $result = $conn->query($sql_check);
 
     if ($result->num_rows > 0) {
-        // 2. ถ้าข้อมูลถูกต้อง ให้เปลี่ยนรหัสผ่าน
         $new_pass_hashed = password_hash($new_pass, PASSWORD_DEFAULT);
-        
         $sql_update = "UPDATE users SET password = '$new_pass_hashed' WHERE username = '$user'";
         
         if ($conn->query($sql_update)) {
-            $success_msg = "✅ เปลี่ยนรหัสผ่านสำเร็จ! กรุณากลับไปเข้าสู่ระบบ";
+            $success_msg = "✅ เปลี่ยนรหัสผ่านสำเร็จ! กรุณาเข้าสู่ระบบใหม่";
         } else {
             $error_msg = "เกิดข้อผิดพลาด: " . $conn->error;
         }
     } else {
-        $error_msg = "❌ ไม่พบข้อมูล! ชื่อผู้ใช้หรือเบอร์โทรศัพท์ไม่ถูกต้อง";
+        $error_msg = "❌ ข้อมูลไม่ถูกต้อง! (ชื่อผู้ใช้หรือเบอร์โทรผิด)";
     }
 }
 ?>
@@ -36,75 +34,88 @@ if (isset($_POST['reset_password'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ลืมรหัสผ่าน / เปลี่ยนรหัสผ่าน</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>ลืมรหัสผ่าน - บักปึก</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #f0f2f5;
+            background: #FFFDE7; 
             font-family: 'Sarabun', sans-serif;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
+            margin: 0;
+            color: #3E2723;
         }
         .card {
-            border-radius: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            background-color: #fff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
             width: 100%;
             max-width: 450px;
+            padding: 40px;
+            text-align: center;
+            border: 1px solid #FFE0B2;
         }
-        .btn-purple {
-            background-color: #512da8;
-            color: white;
+        h3 { color: #C62828; font-weight: 800; margin-bottom: 10px; }
+        p { color: #5D4037; font-size: 14px; margin-bottom: 30px; }
+        
+        input {
+            background-color: #FAFAFA;
+            border: 1px solid #BDBDBD;
+            padding: 12px 15px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 8px;
+            font-family: 'Sarabun', sans-serif;
+            box-sizing: border-box;
         }
-        .btn-purple:hover {
-            background-color: #311b92;
-            color: white;
+        input:focus { outline: 2px solid #EF6C00; }
+        
+        .btn-reset {
+            background-color: #D84315; color: white; border: none;
+            border-radius: 50px; padding: 12px; width: 100%;
+            font-weight: bold; font-size: 16px; margin-top: 20px;
+            cursor: pointer; transition: 0.2s;
         }
+        .btn-reset:hover { background-color: #BF360C; }
+        
+        .alert-error { background: #FFEBEE; color: #D32F2F; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; border: 1px solid #EF9A9A; }
+        .alert-success { background: #E8F5E9; color: #1B5E20; padding: 10px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; border: 1px solid #A5D6A7; }
+        
+        a { color: #555; text-decoration: none; font-size: 14px; display: block; margin-top: 15px; font-weight: bold;}
+        a:hover { color: #D84315; }
     </style>
 </head>
 <body>
 
-    <div class="card p-4">
-        <h3 class="text-center mb-3 text-primary fw-bold">เปลี่ยนรหัสผ่านใหม่</h3>
-        <p class="text-center text-muted small">กรอกชื่อผู้ใช้และเบอร์โทรศัพท์เพื่อยืนยันตัวตน</p>
+    <div class="card">
+        <h3>🔐 เปลี่ยนรหัสผ่านใหม่</h3>
+        <p>กรอกข้อมูลยืนยันตัวตนเพื่อตั้งรหัสใหม่</p>
 
         <?php if($error_msg != ""): ?>
-            <div class="alert alert-danger text-center"><?php echo $error_msg; ?></div>
+            <div class="alert-error"><?php echo $error_msg; ?></div>
         <?php endif; ?>
 
         <?php if($success_msg != ""): ?>
-            <div class="alert alert-success text-center">
-                <?php echo $success_msg; ?>
-                <div class="mt-2">
-                    <a href="index.php" class="btn btn-outline-success btn-sm">กลับหน้าเข้าสู่ระบบ</a>
-                </div>
-            </div>
+            <div class="alert-success"><?php echo $success_msg; ?></div>
+            <a href="login.php" class="btn-reset" style="display:block; text-decoration:none; padding-top:12px;">กลับไปหน้าเข้าสู่ระบบ</a>
         <?php else: ?>
 
         <form method="post">
-            <div class="mb-3">
-                <label class="form-label">ชื่อผู้ใช้ (Username)</label>
-                <input type="text" name="username" class="form-control" required placeholder="กรอก Username ของคุณ">
-            </div>
+            <div style="text-align: left; font-weight: bold; font-size: 14px; margin-bottom: 5px;">ชื่อผู้ใช้ (Username)</div>
+            <input type="text" name="username" required placeholder="กรอก Username ของคุณ">
             
-            <div class="mb-3">
-                <label class="form-label">เบอร์โทรศัพท์ที่ลงทะเบียน</label>
-                <input type="text" name="phone" class="form-control" required placeholder="08xxxxxxxx">
-            </div>
+            <div style="text-align: left; font-weight: bold; font-size: 14px; margin-bottom: 5px; margin-top:10px;">เบอร์โทรศัพท์</div>
+            <input type="text" name="phone" required placeholder="เบอร์โทรที่ลงทะเบียนไว้">
 
-            <hr>
+            <div style="height: 1px; background: #EEE; margin: 20px 0;"></div>
 
-            <div class="mb-3">
-                <label class="form-label">ตั้งรหัสผ่านใหม่</label>
-                <input type="password" name="new_password" class="form-control" required placeholder="รหัสผ่านใหม่ที่ต้องการ">
-            </div>
+            <div style="text-align: left; font-weight: bold; font-size: 14px; margin-bottom: 5px;">ตั้งรหัสผ่านใหม่</div>
+            <input type="password" name="new_password" required placeholder="รหัสผ่านใหม่ที่ต้องการ">
 
-            <div class="d-grid gap-2">
-                <button type="submit" name="reset_password" class="btn btn-purple">ยืนยันการเปลี่ยนรหัสผ่าน</button>
-                <a href="index.php" class="btn btn-light text-muted">ยกเลิก / กลับไปหน้า Login</a>
-            </div>
+            <button type="submit" name="reset_password" class="btn-reset">ยืนยันการเปลี่ยนรหัส</button>
+            <a href="login.php">ยกเลิก / กลับไปหน้า Login</a>
         </form>
 
         <?php endif; ?>
