@@ -4,37 +4,68 @@ require_once ('connect.php');
 
 // 1. Logic การสมัครสมาชิก
 if (isset($_POST['register'])) {
-    $user = $_POST['username'];
-    $pass = $_POST['password']; // ควรเข้ารหัสด้วย password_hash() ในงานจริง
-    $name = $_POST['fullname'];
-    $role = 'customer'; // สมัครหน้าเว็บเป็นลูกค้าเสมอ
+    // 1.1 ป้องกัน SQL Injection โดยการ Escape ตัวอักษรพิเศษ
+    $user = $conn->real_escape_string($_POST['username']);
+    $pass = $_POST['password']; 
+    $name = $conn->real_escape_string($_POST['fullname']);
+    $role = 'customer'; 
 
-    $sql = "INSERT INTO users (username, password, fullname, role) VALUES ('$user', '$pass', '$name', '$role')";
-    if($conn->query($sql)){ echo "<script>alert('สมัครสำเร็จ! กรุณาล็อกอิน');</script>"; }
+    // 1.2 ตรวจสอบว่า Username ซ้ำหรือไม่
+    $check_sql = "SELECT username FROM users WHERE username = '$user'";
+    $check_result = $conn->query($check_sql);
+
+    if ($check_result->num_rows > 0) {
+        echo "<script>alert('Username นี้มีผู้ใช้งานแล้ว กรุณาใช้ชื่ออื่น');</script>";
+    } else {
+        // 1.3 เข้ารหัสรหัสผ่านก่อนบันทึก (Hash)
+        $password_hashed = password_hash($pass, PASSWORD_DEFAULT);
+
+        // บันทึกโดยใช้รหัสผ่านที่เข้ารหัสแล้ว ($password_hashed)
+        $sql = "INSERT INTO users (username, password, fullname, role) VALUES ('$user', '$password_hashed', '$name', '$role')";
+        
+        if($conn->query($sql)){ 
+            echo "<script>alert('สมัครสำเร็จ! กรุณาล็อกอิน');</script>"; 
+        } else {
+            echo "<script>alert('เกิดข้อผิดพลาด: " . $conn->error . "');</script>";
+        }
+    }
 }
 
 // 2. Logic การ Login
 if (isset($_POST['login'])) {
-    $user = $_POST['username'];
+    // 2.1 ป้องกัน SQL Injection
+    $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
 
-    $sql = "SELECT * FROM users WHERE username = '$user' AND password = '$pass'";
+    // 2.2 ดึงข้อมูล user มาก่อน (ยังไม่เช็ครหัสผ่านใน Query เพื่อความปลอดภัยสูงสุด)
+    $sql = "SELECT * FROM users WHERE username = '$user'";
     $result = $conn->query($sql);
 
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        $_SESSION['user_id'] = $row['user_id'];
-        $_SESSION['username'] = $row['username'];
-        $_SESSION['fullname'] = $row['fullname'];
-        $_SESSION['role'] = $row['role'];
+        
+        // 2.3 ตรวจสอบรหัสผ่านด้วย password_verify (เทียบรหัสที่กรอก กับ Hash ใน DB)
+        if (password_verify($pass, $row['password'])) {
+            
+            // รหัสผ่านถูกต้อง -> สร้าง Session
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['username'] = $row['username'];
+            $_SESSION['fullname'] = $row['fullname'];
+            $_SESSION['role'] = $row['role'];
 
-        if($row['role'] == 'admin'){
-            header("Location: admin_panel.php");
+            if($row['role'] == 'admin'){
+                header("Location: admin_panel.php");
+            } else {
+                header("Location: index.php");
+            }
+            exit();
+
         } else {
-            header("Location: index.php");
+            // รหัสผ่านไม่ถูกต้อง
+            echo "<script>alert('ชื่อผู้ใช้หรือรหัสผ่านผิด');</script>";
         }
-        exit();
     } else {
+        // ไม่พบชื่อผู้ใช้นี้
         echo "<script>alert('ชื่อผู้ใช้หรือรหัสผ่านผิด');</script>";
     }
 }
@@ -48,7 +79,8 @@ if (isset($_POST['login'])) {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-    <?php include 'navbar.php'; ?>
+    <?php // include 'navbar.php'; ?> 
+    
     <div class="container mt-5">
         <div class="row">
             <div class="col-md-6">
