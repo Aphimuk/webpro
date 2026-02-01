@@ -1,7 +1,6 @@
 <?php
 require_once ('connect.php');
 
-
 // 1. รับค่า ID ที่จะแก้ไข
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
@@ -10,7 +9,23 @@ if (isset($_GET['id'])) {
     $product = $result->fetch_assoc();
 }
 
-// 2. บันทึกข้อมูลเมื่อกดปุ่ม Update
+// 2. Logic จัดการรูปภาพ (ลบรูปทั้งหมด)
+if(isset($_POST['delete_images'])){
+    $id = $_POST['product_id'];
+    // ลบไฟล์จริง
+    $res = $conn->query("SELECT image_file FROM product_images WHERE product_id=$id");
+    while($r = $res->fetch_assoc()){
+        @unlink("uploads/" . $r['image_file']);
+    }
+    // ลบใน DB
+    $conn->query("DELETE FROM product_images WHERE product_id=$id");
+    // ลบปกใน products
+    $conn->query("UPDATE products SET image_file='' WHERE product_id=$id");
+    
+    echo "<script>alert('ลบรูปภาพทั้งหมดแล้ว'); window.location='edit_product.php?id=$id';</script>";
+}
+
+// 3. บันทึกข้อมูลเมื่อกดปุ่ม Update
 if (isset($_POST['update'])) {
     $id = $_POST['product_id'];
     $name = $_POST['product_name'];
@@ -18,19 +33,30 @@ if (isset($_POST['update'])) {
     $cat_id = $_POST['category_id'];
     $desc = $_POST['description'];
 
-    // SQL Update พื้นฐาน
+    // Update ข้อมูลพื้นฐาน
     $sql = "UPDATE products SET product_name='$name', price='$price', category_id='$cat_id', description='$desc' WHERE product_id=$id";
+    $conn->query($sql);
 
-    // ถ้ามีการอัปโหลดรูปใหม่
-    if (!empty($_FILES['product_image']['name'])) {
-        $image = basename($_FILES['product_image']['name']);
-        move_uploaded_file($_FILES['product_image']['tmp_name'], "uploads/$image");
-        $sql = "UPDATE products SET product_name='$name', price='$price', category_id='$cat_id', description='$desc', image_file='$image' WHERE product_id=$id";
+    // ถ้ามีการอัปโหลดรูปภาพเพิ่ม (Multiple)
+    if (!empty(array_filter($_FILES['product_images']['name']))) {
+        $target_dir = "uploads/";
+        $countfiles = count($_FILES['product_images']['name']);
+
+        for($i = 0; $i < $countfiles; $i++){
+            $filename = basename($_FILES['product_images']['name'][$i]);
+            if($filename != ""){
+                $target_file = $target_dir . $filename;
+                if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
+                    $conn->query("INSERT INTO product_images (product_id, image_file) VALUES ('$id', '$filename')");
+                    
+                    // อัปเดตปกถ้ายังไม่มี
+                    $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$id' AND (image_file IS NULL OR image_file='')");
+                }
+            }
+        }
     }
 
-    if ($conn->query($sql)) {
-        echo "<script>alert('แก้ไขข้อมูลสำเร็จ'); window.location='admin_panel.php?page=products';</script>";
-    }
+    echo "<script>alert('แก้ไขข้อมูลสำเร็จ'); window.location='admin_panel.php?page=products';</script>";
 }
 ?>
 
@@ -69,8 +95,24 @@ if (isset($_POST['update'])) {
                     <label>รายละเอียด</label>
                     <textarea name="description" class="form-control mb-2"><?php echo $product['description']; ?></textarea>
 
-                    <label>รูปภาพ (ปล่อยว่างถ้าไม่เปลี่ยน)</label>
-                    <input type="file" name="product_image" class="form-control mb-3">
+                    <label>เพิ่มรูปภาพใหม่ (เลือกเพิ่มได้หลายรูป):</label>
+                    <input type="file" name="product_images[]" class="form-control mb-3" multiple>
+                    
+                    <div class="alert alert-info">
+                        <strong>รูปภาพปัจจุบัน:</strong><br>
+                        <?php
+                            $imgs = $conn->query("SELECT * FROM product_images WHERE product_id=".$product['product_id']);
+                            if($imgs->num_rows > 0){
+                                while($img = $imgs->fetch_assoc()){
+                                    echo "<img src='uploads/{$img['image_file']}' class='m-1 border' style='height: 80px;'>";
+                                }
+                            } else {
+                                echo "ไม่มีรูปภาพ";
+                            }
+                        ?>
+                        <br>
+                        <button type="submit" name="delete_images" class="btn btn-danger btn-sm mt-2" onclick="return confirm('ต้องการลบรูปภาพทั้งหมดเพื่อลงใหม่ใช่หรือไม่?')">ลบรูปภาพทั้งหมด</button>
+                    </div>
 
                     <button type="submit" name="update" class="btn btn-primary">บันทึกการเปลี่ยนแปลง</button>
                     <a href="admin_panel.php" class="btn btn-secondary">ยกเลิก</a>

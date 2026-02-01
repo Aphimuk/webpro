@@ -2,25 +2,21 @@
 session_start();
 require_once ('connect.php');
 
-// --- 1. ส่วนจัดการคำค้นหาและจำค่าเดิม ---
-$search_value = ""; // ตัวแปรสำหรับเก็บคำที่เคยพิมพ์ไว้
+$search_value = ""; 
 $where_sql = "";
 
 if (isset($_GET['search']) && $_GET['search'] != "") {
     $search = $conn->real_escape_string($_GET['search']);
     $where_sql = "WHERE product_name LIKE '%$search%'";
-    // เก็บค่าที่ค้นหาไว้ในตัวแปร เพื่อนำไปแสดงในช่อง input
     $search_value = htmlspecialchars($_GET['search']); 
 } elseif (isset($_GET['category_id']) && $_GET['category_id'] != "") {
     $cat_id = $conn->real_escape_string($_GET['category_id']);
     $where_sql = "WHERE category_id = '$cat_id'";
 }
 
-// ดึงข้อมูลสินค้า
 $sql_products = "SELECT * FROM products $where_sql ORDER BY product_id DESC";
 $result_products = $conn->query($sql_products);
 
-// ดึงข้อมูลหมวดหมู่
 $sql_cats = "SELECT * FROM categories";
 $result_cats = $conn->query($sql_cats);
 ?>
@@ -36,8 +32,6 @@ $result_cats = $conn->query($sql_cats);
     <style>
         .card-img-top { height: 200px; object-fit: cover; }
         .sidebar { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
-        /* เพิ่ม Transition ให้ Alert หายไปนุ่มนวลถ้าใช้ JS ปิด */
-        .alert { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -55,7 +49,12 @@ $result_cats = $conn->query($sql_cats);
 
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="cart.php"><i class="fas fa-shopping-cart"></i> ตะกร้าสินค้า</a>
-                <a class="nav-link" href="login.php">ออกจากระบบ</a>
+                <?php if(isset($_SESSION['user_id'])): ?>
+                    <a class="nav-link" href="my_orders.php">บัญชีของฉัน</a>
+                    <a class="nav-link" href="logout.php">ออกจากระบบ</a>
+                <?php else: ?>
+                    <a class="nav-link" href="login.php">เข้าสู่ระบบ</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
@@ -67,7 +66,6 @@ $result_cats = $conn->query($sql_cats);
                 <i class="fas fa-exclamation-circle"></i> 
                 <?php 
                     echo $_SESSION['alert_msg']; 
-                    // แสดงเสร็จแล้วลบทิ้ง รีเฟรชจะได้ไม่ขึ้นซ้ำ
                     unset($_SESSION['alert_msg']);
                     unset($_SESSION['alert_type']);
                 ?>
@@ -107,7 +105,11 @@ $result_cats = $conn->query($sql_cats);
                         <?php while($row = $result_products->fetch_assoc()): ?>
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100 shadow-sm">
-                                    <img src="uploads/<?php echo $row['image_file']; ?>" class="card-img-top" alt="รูปอาหาร">
+                                    <?php 
+                                        // ตรวจสอบรูปภาพ
+                                        $img_show = !empty($row['image_file']) ? "uploads/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
+                                    ?>
+                                    <img src="<?php echo $img_show; ?>" class="card-img-top" alt="รูปอาหาร">
                                     <div class="card-body">
                                         <h5 class="card-title"><?php echo $row['product_name']; ?></h5>
                                         <p class="card-text text-danger fw-bold">฿<?php echo number_format($row['price'], 2); ?></p>

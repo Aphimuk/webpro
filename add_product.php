@@ -1,29 +1,48 @@
 <?php
 require_once ('connect.php');
 
-
-// ตรวจสอบว่ามีการกดปุ่ม Submit หรือไม่
+// ตรวจสอบการกดปุ่ม Submit
 if (isset($_POST['submit'])) {
     $name = $_POST['product_name'];
     $desc = $_POST['description'];
     $price = $_POST['price'];
     $cat_id = $_POST['category_id'];
     
-    // การจัดการอัปโหลดรูปภาพ
-    $target_dir = "uploads/"; // ต้องสร้างโฟลเดอร์ uploads ไว้ด้วย
-    $file_name = basename($_FILES["product_image"]["name"]);
-    $target_file = $target_dir . $file_name;
-    $uploadOk = 1;
-    
-    // (ส่วนนี้ควรเพิ่มโค้ดตรวจสอบไฟล์ซ้ำและประเภทไฟล์เพื่อความปลอดภัย)
-    move_uploaded_file($_FILES["product_image"]["tmp_name"], $target_file);
-
-    // SQL Insert
-    $sql = "INSERT INTO products (product_name, description, price, category_id, image_file) 
-            VALUES ('$name', '$desc', '$price', '$cat_id', '$file_name')";
+    // 1. Insert ข้อมูลสินค้าลงไปก่อน เพื่อเอา product_id
+    // (เรายังเก็บ image_file ไว้ในตารางหลักเผื่อใช้เป็นรูปหน้าปกรูปแรก)
+    $sql = "INSERT INTO products (product_name, description, price, category_id) 
+            VALUES ('$name', '$desc', '$price', '$cat_id')";
 
     if ($conn->query($sql) === TRUE) {
-        echo "<script>alert('เพิ่มเมนูอาหารเรียบร้อยแล้ว!');</script>";
+        $last_id = $conn->insert_id; // ได้ ID สินค้าล่าสุดมา
+        
+        // 2. จัดการอัปโหลดรูปภาพหลายรูป
+        $target_dir = "uploads/";
+        if (!file_exists($target_dir)) { mkdir($target_dir, 0777, true); }
+
+        $countfiles = count($_FILES['product_images']['name']);
+        
+        // วนลูปรูปภาพทั้งหมดที่ส่งมา
+        for($i = 0; $i < $countfiles; $i++){
+            $filename = basename($_FILES['product_images']['name'][$i]);
+            
+            if($filename != ""){
+                $target_file = $target_dir . $filename;
+                // อัปโหลดไฟล์
+                if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
+                    // Insert ลงตาราง product_images
+                    $sql_img = "INSERT INTO product_images (product_id, image_file) VALUES ('$last_id', '$filename')";
+                    $conn->query($sql_img);
+
+                    // อัปเดตตาราง products ให้มีรูปปก (เอารูปแรกที่อัปโหลด)
+                    if($i == 0){
+                        $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$last_id'");
+                    }
+                }
+            }
+        }
+
+        echo "<script>alert('เพิ่มเมนูอาหารและรูปภาพเรียบร้อยแล้ว!'); window.location='admin_panel.php?page=products';</script>";
     } else {
         echo "Error: " . $sql . "<br>" . $conn->error;
     }
@@ -34,7 +53,7 @@ if (isset($_POST['submit'])) {
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>เพิ่มเมนูอาหาร - ร้านอาหาร บักปึก</title>
+    <title>เพิ่มเมนูอาหาร - Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -42,7 +61,7 @@ if (isset($_POST['submit'])) {
 <div class="container mt-5">
     <div class="card shadow">
         <div class="card-header bg-primary text-white">
-            <h4>เพิ่มเมนูอาหารใหม่ (Backend)</h4>
+            <h4>เพิ่มเมนูอาหารใหม่ (รองรับหลายรูป)</h4>
         </div>
         <div class="card-body">
             <form action="" method="post" enctype="multipart/form-data">
@@ -66,7 +85,6 @@ if (isset($_POST['submit'])) {
                         <label class="form-label">หมวดหมู่:</label>
                         <select name="category_id" class="form-control">
                             <?php
-                            // ดึงข้อมูลหมวดหมู่มาแสดงใน Dropdown
                             $sql_cat = "SELECT * FROM categories";
                             $result_cat = $conn->query($sql_cat);
                             while($row = $result_cat->fetch_assoc()) {
@@ -78,12 +96,13 @@ if (isset($_POST['submit'])) {
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">รูปภาพอาหาร:</label>
-                    <input type="file" name="product_image" class="form-control" required>
+                    <label class="form-label">รูปภาพอาหาร (เลือกได้หลายรูป):</label>
+                    <input type="file" name="product_images[]" class="form-control" multiple="multiple" required>
+                    <small class="text-muted">* กด Ctrl ค้างไว้เพื่อเลือกหลายรูป</small>
                 </div>
 
                 <button type="submit" name="submit" class="btn btn-success">บันทึกข้อมูล</button>
-                <a href="#" class="btn btn-secondary">ย้อนกลับ</a>
+                <a href="admin_panel.php?page=products" class="btn btn-secondary">ย้อนกลับ</a>
             </form>
         </div>
     </div>

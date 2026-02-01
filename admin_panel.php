@@ -2,7 +2,6 @@
 session_start();
 require_once ('connect.php');
 
-
 if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     echo "Access Denied"; exit();
 }
@@ -10,11 +9,20 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 // --- Logic จัดการสินค้า (Delete) ---
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
+    // ลบรูปภาพจาก Server ด้วย (Optional: ถ้าต้องการลบไฟล์ขยะ)
+    $res_imgs = $conn->query("SELECT image_file FROM product_images WHERE product_id=$pid");
+    while($r = $res_imgs->fetch_assoc()){
+        @unlink("uploads/" . $r['image_file']);
+    }
+    
+    // ลบข้อมูลใน DB (Constraint Cascade จะลบใน product_images ให้เอง แต่เราเขียนเผื่อไว้)
+    $conn->query("DELETE FROM product_images WHERE product_id=$pid");
     $conn->query("DELETE FROM products WHERE product_id=$pid");
+    
     header("Location: admin_panel.php?page=products");
 }
 
-// --- Logic จัดการประเภทสินค้า (Add/Delete/Edit) ---
+// --- Logic จัดการประเภทสินค้า (Add/Delete) ---
 if (isset($_POST['add_category'])) {
     $c_name = $_POST['cat_name'];
     $conn->query("INSERT INTO categories (category_name) VALUES ('$c_name')");
@@ -22,7 +30,8 @@ if (isset($_POST['add_category'])) {
 }
 if (isset($_GET['delete_cat'])) {
     $cid = $_GET['delete_cat'];
-    $conn->query("DELETE FROM categories WHERE category_id=$cid"); // *ระวัง: ถ้ามีสินค้าใช้หมวดนี้อยู่ อาจ error ได้ถ้าไม่แก้ FK
+    // เพื่อป้องกัน Error ถ้ามีสินค้าผูกอยู่ ควรเช็คก่อน (แต่ตามโจทย์ให้ลบได้เลย)
+    $conn->query("DELETE FROM categories WHERE category_id=$cid"); 
     header("Location: admin_panel.php?page=categories");
 }
 
@@ -85,10 +94,10 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                                     <form method='post' class='d-flex'>
                                         <input type='hidden' name='order_id' value='{$row['order_id']}'>
                                         <select name='status' class='form-select form-select-sm me-1'>
-                                            <option value='pending'>Pending</option>
-                                            <option value='cooking'>Cooking</option>
-                                            <option value='completed'>Completed</option>
-                                            <option value='cancelled'>Cancelled</option>
+                                            <option value='pending' ".($row['status']=='pending'?'selected':'').">Pending</option>
+                                            <option value='cooking' ".($row['status']=='cooking'?'selected':'').">Cooking</option>
+                                            <option value='completed' ".($row['status']=='completed'?'selected':'').">Completed</option>
+                                            <option value='cancelled' ".($row['status']=='cancelled'?'selected':'').">Cancelled</option>
                                         </select>
                                         <button type='submit' name='update_status' class='btn btn-sm btn-primary'>✓</button>
                                     </form>
@@ -108,19 +117,20 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                     </form>
 
                     <table class="table table-bordered">
-                        <thead><tr><th>ID</th><th>รูป</th><th>ชื่อสินค้า</th><th>ราคา</th><th>จัดการ</th></tr></thead>
+                        <thead><tr><th>ID</th><th>รูป (ปก)</th><th>ชื่อสินค้า</th><th>ราคา</th><th>จัดการ</th></tr></thead>
                         <?php
                         $sql = "SELECT * FROM products WHERE product_name LIKE '%$search%' ORDER BY product_id DESC";
                         $res = $conn->query($sql);
                         while($row = $res->fetch_assoc()){
+                            $img_src = !empty($row['image_file']) ? "uploads/".$row['image_file'] : "https://via.placeholder.com/50";
                             echo "<tr>
                                 <td>{$row['product_id']}</td>
-                                <td><img src='uploads/{$row['image_file']}' width='50'></td>
+                                <td><img src='$img_src' width='50' height='50' style='object-fit:cover;'></td>
                                 <td>{$row['product_name']}</td>
                                 <td>{$row['price']}</td>
                                 <td>
                                     <a href='edit_product.php?id={$row['product_id']}' class='btn btn-warning btn-sm'>แก้ไข</a>
-                                    <a href='admin_panel.php?delete_product={$row['product_id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"ยืนยันลบ?\")'>ลบ</a>
+                                    <a href='admin_panel.php?delete_product={$row['product_id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"ยืนยันลบสินค้านี้?\")'>ลบ</a>
                                 </td>
                             </tr>";
                         }
