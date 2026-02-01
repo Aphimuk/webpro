@@ -1,28 +1,33 @@
 <?php
 session_start();
-// action: add, update, delete, clear
+
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
 if ($action == 'add') {
     $id = $_GET['id'];
     $qty = isset($_GET['qty']) ? $_GET['qty'] : 1;
     
-    // ตรวจสอบว่ามีตะกร้าหรือยัง
-    if (!isset($_SESSION['cart'])) {
-        $_SESSION['cart'] = array();
-    }
+    if (!isset($_SESSION['cart'])) { $_SESSION['cart'] = array(); }
 
-    // ถ้ามีสินค้านี้อยู่แล้ว ให้เพิ่มจำนวน
     if (isset($_SESSION['cart'][$id])) {
         $_SESSION['cart'][$id] += $qty;
     } else {
         $_SESSION['cart'][$id] = $qty;
     }
-    header("Location: cart.php");
+    
+    // ตั้งค่าแจ้งเตือนแบบสวยๆ
+    $_SESSION['alert_msg'] = "✅ เพิ่มเมนูลงตะกร้าเรียบร้อยแล้ว!";
+    $_SESSION['alert_type'] = "success";
+    
+    // ถ้ามาจากหน้า Detail ให้กลับไปหน้า Index หรือหน้าเดิม (แล้วแต่ชอบ)
+    header("Location: index.php"); 
 } 
 elseif ($action == 'delete') {
     $id = $_GET['id'];
     unset($_SESSION['cart'][$id]);
+    
+    $_SESSION['alert_msg'] = "🗑️ ลบรายการออกจากตะกร้าแล้ว";
+    $_SESSION['alert_type'] = "warning";
     header("Location: cart.php");
 }
 elseif ($action == 'clear') {
