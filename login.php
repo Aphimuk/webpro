@@ -114,7 +114,19 @@ if (isset($_POST['login'])) {
             position: absolute;
             left: 0;
             top: 0;
-            width: 50%;
+            width: 25%;
+            height: 100%;
+            background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .right-side {
+            position: absolute;
+            right: 0;
+            left: 0;
+            top: 0;
+            width: 25%;
             height: 100%;
             background-image: url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop');
             background-size: cover;
@@ -124,9 +136,9 @@ if (isset($_POST['login'])) {
         /* ส่วนขวา: พื้นที่ฟอร์ม */
         .right-side {
             position: absolute;
-            right: 0;
+            right: 25%;
             top: 0;
-            width: 70%;
+            width: 50%;
             height: 100%;
             background: #ffffff;
             display: flex;
