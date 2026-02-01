@@ -2,7 +2,7 @@
 session_start();
 require_once ('connect.php');
 
-// --- PHP Logic: จัดการ Login และ Register ---
+// --- PHP Logic ส่วนเดิม ---
 $old_fullname = "";
 $old_username = "";
 $old_address = "";  
@@ -14,10 +14,8 @@ $login_error = "";
 
 $is_register_active = false;
 
-// 1. Logic สมัครสมาชิก
 if (isset($_POST['register'])) {
     $is_register_active = true;
-
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password']; 
     $name = $conn->real_escape_string($_POST['fullname']);
@@ -30,11 +28,9 @@ if (isset($_POST['register'])) {
     $old_address = $address;
     $old_phone = $phone;
 
-    // ตรวจสอบข้อมูลฝั่ง Server
     if(empty($user) || empty($pass) || empty($name) || empty($phone)){
         $register_error = "⚠️ กรุณากรอกข้อมูลให้ครบถ้วน";
     } else {
-        // ตรวจสอบ Username ซ้ำ
         $check_sql = "SELECT username FROM users WHERE username = '$user'";
         if ($conn->query($check_sql)->num_rows > 0) {
             $register_error = "⚠️ Username '$user' มีผู้ใช้งานแล้ว!";
@@ -44,10 +40,8 @@ if (isset($_POST['register'])) {
                     VALUES ('$user', '$password_hashed', '$name', '$address', '$phone', '$role')";
             
             if($conn->query($sql)){ 
-                $register_success = "✅ สมัครสมาชิกสำเร็จ! ยินดีต้อนรับครับ";
-                $is_register_active = false; // กลับไปหน้า Login
-                
-                // ล้างค่าเก่า
+                $register_success = "✅ สมัครสมาชิกสำเร็จ!";
+                $is_register_active = false; 
                 $old_fullname = ""; $old_address = ""; $old_phone = "";
             } else {
                 $register_error = "Error: " . $conn->error;
@@ -56,29 +50,22 @@ if (isset($_POST['register'])) {
     }
 }
 
-// 2. Logic การ Login
 if (isset($_POST['login'])) {
     $is_register_active = false;
-
     $user = $conn->real_escape_string($_POST['username']);
     $pass = $_POST['password'];
 
     $result = $conn->query("SELECT * FROM users WHERE username = '$user'");
-
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
         if (password_verify($pass, $row['password'])) {
-            // Login สำเร็จ -> เก็บ Session
             $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['username'] = $row['username'];
             $_SESSION['fullname'] = $row['fullname'];
             $_SESSION['role'] = $row['role'];
-
-            // ตั้งค่าแจ้งเตือนต้อนรับ
-            $_SESSION['alert_msg'] = "ยินดีต้อนรับคุณ {$row['fullname']} กลับสู่ร้านบักปึก!";
+            $_SESSION['alert_msg'] = "ยินดีต้อนรับคุณ {$row['fullname']} !";
             $_SESSION['alert_type'] = "success";
 
-            // แยกทางไป Admin หรือ ลูกค้า
             if($row['role'] == 'admin'){
                 header("Location: admin_panel.php");
             } else {
@@ -104,8 +91,7 @@ if (isset($_POST['login'])) {
     <style>
         * { box-sizing: border-box; }
         body {
-            /* พื้นหลังครีมเหลืองอ่อนๆ อ่านง่าย สบายตา */
-            background: #FFFDE7; 
+            background: #FFFDE7; /* พื้นหลังครีม */
             font-family: 'Sarabun', sans-serif;
             display: flex;
             justify-content: center;
@@ -115,22 +101,21 @@ if (isset($_POST['login'])) {
             margin: 0;
         }
         
+        /* --- แก้ไข: ตั้งค่าสีข้อความทั่วไป (สำหรับฝั่งฟอร์มสีขาว) --- */
         h1 { 
             font-weight: 800; margin: 0; 
-            color: #C62828; /* แดงเข้ม ชัดเจน */
+            color: #C62828; /* แดงเข้ม (อยู่บนพื้นขาว อ่านง่าย) */
         }
-        
         p { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.5px; margin: 20px 0 30px; color: #3E2723; }
         span { font-size: 12px; color: #5D4037; font-weight: 500; margin-bottom: 10px; display: block;}
-        
         a { color: #333; font-size: 14px; text-decoration: none; margin: 15px 0 10px; font-weight: bold; }
         a:hover { text-decoration: underline; color: #D84315; }
 
-        /* ปุ่มกดแบบ High Contrast */
+        /* --- ปุ่มหลัก (Sign In / Sign Up) --- */
         button {
             border-radius: 50px;
             border: 1px solid #BF360C;
-            background-color: #D84315; /* ส้มอิฐเข้ม */
+            background-color: #D84315; /* ส้มอิฐ */
             color: #FFFFFF;
             font-size: 14px;
             font-weight: bold;
@@ -145,10 +130,16 @@ if (isset($_POST['login'])) {
         }
         button:hover { background-color: #BF360C; }
         button:active { transform: scale(0.95); }
+        
+        /* --- ปุ่ม Ghost (ปุ่มบนแถบสีแดง) --- */
         button.ghost { 
             background-color: transparent; 
             border-color: #FFFFFF; 
+            color: #FFFFFF; /* บังคับตัวหนังสือสีขาว */
             box-shadow: none;
+        }
+        button.ghost:hover {
+            background-color: rgba(255,255,255,0.2);
         }
         
         form {
@@ -163,17 +154,17 @@ if (isset($_POST['login'])) {
         }
         
         input {
-            background-color: #FAFAFA; /* ขาวเกือบเทา */
-            border: 1px solid #BDBDBD; /* เส้นขอบเทาเข้มขึ้น */
+            background-color: #FFFFFF; /* เปลี่ยนเป็นขาวล้วน */
+            border: 2px solid #EEEEEE; /* ขอบสีเทาจางๆ */
             padding: 12px 15px;
             margin: 8px 0;
             width: 100%;
             border-radius: 8px;
             font-family: 'Sarabun', sans-serif;
-            color: #212121; /* ตัวหนังสือดำเข้ม */
+            color: #333;
             font-weight: 500;
         }
-        input:focus { outline: 2px solid #EF6C00; border-color: #EF6C00; }
+        input:focus { outline: none; border-color: #FF6D00; background-color: #FFF8E1; }
 
         .container {
             background-color: #fff;
@@ -197,7 +188,7 @@ if (isset($_POST['login'])) {
         .overlay-container { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden; transition: transform 0.6s ease-in-out; z-index: 100; }
         .container.right-panel-active .overlay-container { transform: translateX(-100%); }
         
-        /* แถบสีด้านข้าง (Gradient ส้มแดงเข้ม) */
+        /* --- แถบสีด้านข้าง (Gradient ส้มแดงเข้ม) --- */
         .overlay {
             background: #B71C1C;
             background: -webkit-linear-gradient(to right, #D84315, #B71C1C);
@@ -214,6 +205,16 @@ if (isset($_POST['login'])) {
             transition: transform 0.6s ease-in-out;
         }
         
+        /* --- สำคัญ: แก้ไขสีตัวหนังสือที่อยู่บนแถบสีแดง ให้เป็นสีขาว --- */
+        .overlay-panel h1 {
+            color: #FFFFFF !important; /* บังคับสีขาว */
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* ใส่เงาให้อ่านง่ายขึ้น */
+        }
+        .overlay-panel p {
+            color: #FFFFFF !important; /* บังคับสีขาว */
+            font-weight: 500;
+        }
+        
         .container.right-panel-active .overlay { transform: translateX(50%); }
         .overlay-panel { position: absolute; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 0 40px; text-align: center; top: 0; height: 100%; width: 50%; transform: translateX(0); transition: transform 0.6s ease-in-out; }
         .overlay-left { transform: translateX(-20%); }
@@ -221,15 +222,8 @@ if (isset($_POST['login'])) {
         .overlay-right { right: 0; transform: translateX(0); }
         .container.right-panel-active .overlay-right { transform: translateX(20%); }
 
-        /* กล่องแจ้งเตือน Error */
-        .alert-text { 
-            color: #D32F2F; font-weight: bold; margin-bottom: 10px; 
-            background: #FFEBEE; padding: 10px; border-radius: 8px; width: 100%; border: 1px solid #EF9A9A;
-        }
-        .success-text { 
-            color: #1B5E20; font-weight: bold; margin-bottom: 10px; 
-            background: #E8F5E9; padding: 10px; border-radius: 8px; width: 100%; border: 1px solid #A5D6A7;
-        }
+        .alert-text { color: #D32F2F; font-weight: bold; margin-bottom: 10px; background: #FFEBEE; padding: 10px; border-radius: 8px; width: 100%; border: 1px solid #EF9A9A; }
+        .success-text { color: #1B5E20; font-weight: bold; margin-bottom: 10px; background: #E8F5E9; padding: 10px; border-radius: 8px; width: 100%; border: 1px solid #A5D6A7; }
         .input-error { border: 2px solid #D32F2F !important; background-color: #FFEBEE !important; }
     </style>
 </head>
@@ -283,14 +277,15 @@ if (isset($_POST['login'])) {
             <div class="overlay">
                 
                 <div class="overlay-panel overlay-left">
-                    <h1>หิวแล้วใช่ไหม?</h1>
-                    <p>กลับเข้าสู่ระบบเพื่อสั่งไก่ทอดร้อนๆ<br>ส่งตรงถึงบ้านคุณ</p>
+                    <h1>สวัสดีเพื่อนใหม่!</h1>
+                    <p>สมัครสมาชิกวันนี้<br>เพื่อรับประสบการณ์ความอร่อยที่เหนือกว่า</p>
+                    
                     <button class="ghost" id="signIn">ไปหน้าเข้าสู่ระบบ</button>
                 </div>
                 
                 <div class="overlay-panel overlay-right">
-                    <h1>สวัสดีเพื่อนใหม่!</h1>
-                    <p>สมัครสมาชิกวันนี้<br>เพื่อรับประสบการณ์ความอร่อยที่เหนือกว่า</p>
+                    <h1>หิวแล้วใช่ไหม?</h1>
+                    <p>กลับเข้าสู่ระบบเพื่อสั่งไก่ทอดร้อนๆ<br>ส่งตรงถึงบ้านคุณ</p>
                     <button class="ghost" id="signUp">สมัครสมาชิกใหม่</button>
                 </div>
             </div>
@@ -304,21 +299,16 @@ if (isset($_POST['login'])) {
         const registerForm = document.getElementById('registerForm');
         const jsErrorDiv = document.getElementById('js-error');
 
-        // สลับหน้าจอ
         signUpButton.addEventListener('click', () => { container.classList.add("right-panel-active"); });
         signInButton.addEventListener('click', () => { container.classList.remove("right-panel-active"); });
 
-        // ตรวจสอบข้อมูลก่อนส่ง (Validation)
         registerForm.addEventListener('submit', function(e) {
             let errors = [];
             let inputs = registerForm.querySelectorAll('input[required]');
-            
-            // รีเซ็ตสถานะเดิม
             inputs.forEach(input => input.classList.remove('input-error'));
             jsErrorDiv.style.display = 'none';
             jsErrorDiv.innerHTML = '';
 
-            // เช็คช่องว่าง
             inputs.forEach(function(input) {
                 if (!input.value.trim()) {
                     errors.push(input.getAttribute('data-label'));
@@ -326,7 +316,6 @@ if (isset($_POST['login'])) {
                 }
             });
 
-            // ถ้ามี error ให้หยุดส่งและแจ้งเตือน
             if (errors.length > 0) {
                 e.preventDefault();
                 jsErrorDiv.style.display = 'block';
