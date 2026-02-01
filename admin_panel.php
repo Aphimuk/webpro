@@ -7,7 +7,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
 }
 
 // --------------------------------------------------------
-// 1. Logic ลบสินค้า (Hard Delete + ลบรูป)
+// 1. Logic ลบสินค้า (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
@@ -23,12 +23,12 @@ if (isset($_GET['delete_product'])) {
 }
 
 // --------------------------------------------------------
-// 2. Logic หมวดหมู่
+// 2. Logic หมวดหมู่ (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_POST['add_category'])) {
     $c_name = $_POST['cat_name'];
     $conn->query("INSERT INTO categories (category_name) VALUES ('$c_name')");
-    $_SESSION['alert_msg'] = "✅ เพิ่มหมวดหมู่สำเร็จ";
+    $_SESSION['alert_msg'] = "✅ เพิ่มหมวดหมู่ '$c_name' สำเร็จ";
     $_SESSION['alert_type'] = "success";
     header("Location: admin_panel.php?page=categories");
     exit();
@@ -43,60 +43,52 @@ if (isset($_GET['delete_cat'])) {
 }
 
 // --------------------------------------------------------
-// 3. Logic อัปเดตสถานะออเดอร์
+// 3. Logic อัปเดตสถานะออเดอร์ (เหมือนเดิม)
 // --------------------------------------------------------
 if (isset($_POST['update_status'])) {
     $oid = $_POST['order_id'];
     $st = $_POST['status'];
     $conn->query("UPDATE orders SET status='$st' WHERE order_id=$oid");
-    $_SESSION['alert_msg'] = "✅ อัปเดตสถานะเรียบร้อย";
+    $_SESSION['alert_msg'] = "✅ อัปเดตสถานะออเดอร์ #$oid เป็น $st เรียบร้อย";
     $_SESSION['alert_type'] = "info";
     header("Location: admin_panel.php?page=orders");
     exit();
 }
 
 // --------------------------------------------------------
-// 4. Logic ปุ่มที่ 1: ซ่อนลูกค้า (Soft Delete)
-// --------------------------------------------------------
-if (isset($_GET['hide_user'])) {
-    $uid = $_GET['hide_user'];
-    // เปลี่ยนสถานะเป็น 0 (ซ่อน) แต่ข้อมูลยังอยู่
-    $conn->query("UPDATE users SET is_visible = 0 WHERE user_id = $uid");
-    
-    $_SESSION['alert_msg'] = "👻 ซ่อนรายชื่อลูกค้าแล้ว (ลูกค้ายัง Login ได้ตามปกติ)";
-    $_SESSION['alert_type'] = "secondary"; 
-    header("Location: admin_panel.php?page=customers");
-    exit();
-}
-
-// --------------------------------------------------------
-// 5. Logic ปุ่มที่ 2: ลบถาวร (Hard Delete)
+// 4. Logic ลบลูกค้า (แก้ไขใหม่ตามโจทย์)
 // --------------------------------------------------------
 if (isset($_GET['delete_user'])) {
     $uid = $_GET['delete_user'];
     
-    // 5.1 ลบประวัติออเดอร์ที่ 'ยกเลิก' ทิ้งไปก่อน
+    // ขั้นตอนที่ 1: ลบเฉพาะออเดอร์ที่สถานะเป็น 'cancelled' (ยกเลิก) ทิ้งไปก่อน
     $get_cancelled = $conn->query("SELECT order_id FROM orders WHERE user_id=$uid AND status='cancelled'");
+    $deleted_count = 0;
+    
     while($row = $get_cancelled->fetch_assoc()){
         $oid = $row['order_id'];
+        // ลบรายละเอียดในออเดอร์นั้น
         $conn->query("DELETE FROM order_details WHERE order_id=$oid");
+        // ลบตัวออเดอร์
         $conn->query("DELETE FROM orders WHERE order_id=$oid");
+        $deleted_count++;
     }
 
-    // 5.2 เช็คว่ามีออเดอร์ค้างอยู่ไหม (Pending/Cooking/Completed)
+    // ขั้นตอนที่ 2: เช็คว่าเหลือออเดอร์สำคัญ (Pending, Cooking, Completed) ไหม?
     $check_remaining = $conn->query("SELECT COUNT(*) as count FROM orders WHERE user_id=$uid");
     $remaining = $check_remaining->fetch_assoc()['count'];
 
     if ($remaining > 0) {
-        $_SESSION['alert_msg'] = "⚠️ ลบลูกค้าถาวรไม่ได้! เพราะยังมีออเดอร์ค้างอยู่ (ระบบลบให้เฉพาะประวัติที่ยกเลิกเท่านั้น)";
+        // กรณีที่ 1: ยังมีออเดอร์สำคัญเหลืออยู่ -> ไม่ลบลูกค้า แต่แจ้งว่าเคลียร์ประวัติยกเลิกให้แล้ว
+        $_SESSION['alert_msg'] = "⚠️ ระบบลบเฉพาะประวัติที่ 'ยกเลิก' ออกให้แล้ว ($deleted_count รายการ)<br>แต่ยังไม่ลบข้อมูลลูกค้า เนื่องจากยังมีประวัติการซื้อขายที่เสร็จสิ้น/ค้างอยู่ครับ";
         $_SESSION['alert_type'] = "warning";
     } else {
-        // ถ้าไม่มีออเดอร์ค้าง -> ลบUserทิ้งถาวร
+        // กรณีที่ 2: ไม่เหลือออเดอร์แล้ว (หรือมีแต่ยกเลิกซึ่งลบไปหมดแล้ว) -> ลบลูกค้าได้เลย
         if($conn->query("DELETE FROM users WHERE user_id=$uid")){
-            $_SESSION['alert_msg'] = "⛔ ลบลูกค้าถาวรเรียบร้อยแล้ว (ต้องสมัครใหม่)";
-            $_SESSION['alert_type'] = "danger";
+            $_SESSION['alert_msg'] = "✅ ลบลูกค้าออกจากระบบเรียบร้อยแล้ว " . ($deleted_count > 0 ? "(พร้อมเคลียร์ประวัติยกเลิก $deleted_count รายการ)" : "");
+            $_SESSION['alert_type'] = "success";
         } else {
-            $_SESSION['alert_msg'] = "❌ Error: " . $conn->error;
+            $_SESSION['alert_msg'] = "❌ ลบลูกค้าไม่ได้: " . $conn->error;
             $_SESSION['alert_type'] = "danger";
         }
     }
@@ -105,6 +97,7 @@ if (isset($_GET['delete_user'])) {
     exit();
 }
 
+// เตรียมตัวแปร
 $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 ?>
@@ -137,10 +130,18 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                     <i class="fas fa-drumstick-bite"></i> Admin Menu
                 </h5>
                 <nav class="nav flex-column mt-3">
-                    <a href="admin_panel.php?page=orders" class="nav-link <?php echo $page=='orders'?'active':''; ?>"><i class="fas fa-box me-2"></i> ออเดอร์</a>
-                    <a href="admin_panel.php?page=products" class="nav-link <?php echo $page=='products'?'active':''; ?>"><i class="fas fa-utensils me-2"></i> สินค้า</a>
-                    <a href="admin_panel.php?page=categories" class="nav-link <?php echo $page=='categories'?'active':''; ?>"><i class="fas fa-list me-2"></i> หมวดหมู่</a>
-                    <a href="admin_panel.php?page=customers" class="nav-link <?php echo $page=='customers'?'active':''; ?>"><i class="fas fa-users me-2"></i> ลูกค้า</a>
+                    <a href="admin_panel.php?page=orders" class="nav-link <?php echo $page=='orders'?'active':''; ?>">
+                        <i class="fas fa-box me-2"></i> ออเดอร์
+                    </a>
+                    <a href="admin_panel.php?page=products" class="nav-link <?php echo $page=='products'?'active':''; ?>">
+                        <i class="fas fa-utensils me-2"></i> สินค้า
+                    </a>
+                    <a href="admin_panel.php?page=categories" class="nav-link <?php echo $page=='categories'?'active':''; ?>">
+                        <i class="fas fa-list me-2"></i> หมวดหมู่
+                    </a>
+                    <a href="admin_panel.php?page=customers" class="nav-link <?php echo $page=='customers'?'active':''; ?>">
+                        <i class="fas fa-users me-2"></i> ลูกค้า
+                    </a>
                 </nav>
                 <div class="mt-4">
                     <a href="add_product.php" class="btn btn-add w-100 py-2 shadow-sm">+ เพิ่มสินค้าใหม่</a>
@@ -194,7 +195,7 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                     </div>
 
                 <?php elseif($page == 'products'): ?>
-                   <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
                         <h3 class="text-dark fw-bold">🍗 จัดการสินค้า</h3>
                         <form class="d-flex" method="GET">
                             <input type="hidden" name="page" value="products">
@@ -202,6 +203,7 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
                             <button class="btn btn-primary" type="submit">ค้นหา</button>
                         </form>
                     </div>
+                    
                     <div class="card">
                         <div class="card-body p-0">
                             <table class="table table-bordered mb-0 align-middle">
@@ -252,32 +254,21 @@ $search = isset($_GET['search']) ? $_GET['search'] : '';
 
                 <?php elseif($page == 'customers'): ?>
                     <h3 class="text-dark fw-bold mb-3">👥 รายชื่อลูกค้า</h3>
-                    <div class="alert alert-info border-0 shadow-sm" style="background-color: #E3F2FD; color: #0D47A1;">
-                        <small>
-                            <i class="fas fa-eye-slash"></i> <strong>ปุ่มซ่อน:</strong> ลูกค้าหายจากหน้านี้ แต่ยัง Login ได้ (จะกลับมาแสดงเมื่อเขา Login ใหม่)<br>
-                            <i class="fas fa-trash-alt"></i> <strong>ปุ่มลบถาวร:</strong> ลบข้อมูลทิ้งทั้งหมด ลูกค้าต้องสมัครใหม่ (ลบไม่ได้ถ้ามีออเดอร์ค้าง)
-                        </small>
-                    </div>
                     <div class="card">
                         <div class="card-body p-0">
                             <table class="table table-striped mb-0 align-middle">
                                 <thead class="table-dark"><tr><th>User</th><th>ชื่อ-สกุล</th><th>เบอร์โทร</th><th>จัดการ</th></tr></thead>
                                 <tbody>
                                 <?php
-                                // แสดงเฉพาะคนที่ is_visible = 1 (หรือยังไม่มีค่านี้)
-                                $res = $conn->query("SELECT * FROM users WHERE role='customer' AND (is_visible IS NULL OR is_visible = 1)");
+                                $res = $conn->query("SELECT * FROM users WHERE role='customer'");
                                 while($row = $res->fetch_assoc()){
                                     echo "<tr>
                                         <td>{$row['username']}</td>
                                         <td>{$row['fullname']}</td>
                                         <td>{$row['phone']}</td>
                                         <td>
-                                            <a href='admin_panel.php?hide_user={$row['user_id']}' class='btn btn-secondary btn-sm px-3' onclick='return confirm(\"ซ่อนลูกค้ารายนี้จากหน้า Admin ชั่วคราว?\")'>
-                                                <i class='fas fa-eye-slash'></i> ซ่อน
-                                            </a>
-                                            
-                                            <a href='admin_panel.php?delete_user={$row['user_id']}' class='btn btn-danger btn-sm px-3' onclick='return confirm(\"⚠️ ยืนยันลบถาวร? ลูกค้าต้องสมัครใหม่นะ\")'>
-                                                <i class='fas fa-trash-alt'></i> ลบถาวร
+                                            <a href='admin_panel.php?delete_user={$row['user_id']}' class='btn btn-danger btn-sm px-3' onclick='return confirm(\"ระบบจะลบเฉพาะประวัติที่ยกเลิก และจะลบลูกค้าหากไม่มีออเดอร์ค้างอยู่ ยืนยัน?\")'>
+                                                <i class='fas fa-trash-alt'></i> ลบ
                                             </a>
                                         </td>
                                     </tr>";
