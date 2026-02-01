@@ -16,8 +16,7 @@ if (isset($_GET['search']) && $_GET['search'] != "") {
 
 $sql_products = "SELECT * FROM products $where_sql ORDER BY product_id DESC";
 $result_products = $conn->query($sql_products);
-$sql_cats = "SELECT * FROM categories";
-$result_cats = $conn->query($sql_cats);
+$result_cats = $conn->query("SELECT * FROM categories");
 ?>
 
 <!DOCTYPE html>
@@ -25,70 +24,48 @@ $result_cats = $conn->query($sql_cats);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>บักปึก - หน้าร้าน</title>
+    <title>บักปึก ไก่ทอด - เมนูความอร่อย</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        .card-img-top { height: 200px; object-fit: cover; }
-        .sidebar { background-color: #f8f9fa; padding: 20px; border-radius: 10px; }
+        body { font-family: 'Sarabun', sans-serif; background-color: #FFF8E1; } /* พื้นหลังสีครีม */
+        .card-img-top { height: 220px; object-fit: cover; border-bottom: 3px solid #FF6D00; }
+        .sidebar { background-color: #FFFFFF; padding: 20px; border-radius: 15px; border: 1px solid #FFE0B2; }
+        .card { border: none; border-radius: 15px; transition: transform 0.2s; background: #fff; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        .btn-orange { background-color: #FF6D00; color: white; border-radius: 20px; }
+        .btn-orange:hover { background-color: #E65100; color: white; }
+        .list-group-item.active { background-color: #FF6D00; border-color: #FF6D00; }
+        .price-tag { font-size: 1.2rem; color: #D84315; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="index.php">บักปึก</a>
-            
-            <form class="d-flex mx-auto" action="index.php" method="GET">
-                <input class="form-control me-2" type="search" name="search" 
-                       value="<?php echo $search_value; ?>" 
-                       placeholder="ค้นหาเมนูอาหาร..." aria-label="Search">
-                <button class="btn btn-outline-warning" type="submit">ค้นหา</button>
-            </form>
+    <?php include 'navbar.php'; ?>
 
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="cart.php"><i class="fas fa-shopping-cart"></i> ตะกร้าสินค้า</a>
-                <?php if(isset($_SESSION['user_id'])): ?>
-                    <a class="nav-link" href="my_orders.php">บัญชีของฉัน</a>
-                    <a class="nav-link" href="logout.php">ออกจากระบบ</a>
-                <?php else: ?>
-                    <a class="nav-link" href="login.php">เข้าสู่ระบบ</a>
-                <?php endif; ?>
+    <div class="container py-4">
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8">
+                <form class="d-flex shadow-sm rounded-pill overflow-hidden bg-white" action="index.php" method="GET">
+                    <input class="form-control border-0 px-4 py-3" type="search" name="search" 
+                           value="<?php echo $search_value; ?>" 
+                           placeholder="วันนี้กินไก่ทอดรสอะไรดี?..." aria-label="Search">
+                    <button class="btn btn-warning px-4 fw-bold" type="submit">ค้นหา</button>
+                </form>
             </div>
         </div>
-    </nav>
-
-    <div class="container">
-        
-        <?php if(isset($_SESSION['alert_msg'])): ?>
-            <div class="alert alert-<?php echo $_SESSION['alert_type']; ?> alert-dismissible fade show text-center fs-5 fw-bold" role="alert">
-                <i class="fas fa-exclamation-circle"></i> 
-                <?php 
-                    echo $_SESSION['alert_msg']; 
-                    unset($_SESSION['alert_msg']);
-                    unset($_SESSION['alert_type']);
-                ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        <?php endif; ?>
-
 
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-3 mb-4">
                 <div class="sidebar shadow-sm">
-                    <h4>ประเภทอาหาร</h4>
-                    <div class="list-group">
-                        <a href="index.php" class="list-group-item list-group-item-action">ทั้งหมด</a>
-                        
+                    <h5 class="text-secondary fw-bold"><i class="fas fa-utensils"></i> ประเภทอาหาร</h5>
+                    <hr class="text-warning">
+                    <div class="list-group list-group-flush">
+                        <a href="index.php" class="list-group-item list-group-item-action rounded mb-1">ทั้งหมด</a>
                         <?php while($cat = $result_cats->fetch_assoc()): ?>
-                            <?php 
-                                $active_class = "";
-                                if(isset($_GET['category_id']) && $_GET['category_id'] == $cat['category_id']){
-                                    $active_class = "active";
-                                }
-                            ?>
                             <a href="index.php?category_id=<?php echo $cat['category_id']; ?>" 
-                               class="list-group-item list-group-item-action <?php echo $active_class; ?>">
+                               class="list-group-item list-group-item-action rounded mb-1 <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $cat['category_id']) ? 'active' : ''; ?>">
                                 <?php echo $cat['category_name']; ?>
                             </a>
                         <?php endwhile; ?>
@@ -97,37 +74,37 @@ $result_cats = $conn->query($sql_cats);
             </div>
 
             <div class="col-md-9">
-                <h3>รายการอาหารแนะนำ</h3>
-                <hr>
+                <h3 class="fw-bold text-dark mb-3">🍗 รายการอาหารแนะนำ</h3>
                 <div class="row">
                     <?php if ($result_products->num_rows > 0): ?>
                         <?php while($row = $result_products->fetch_assoc()): ?>
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100 shadow-sm">
                                     <?php 
-                                        // เปลี่ยนเป็น img/
                                         $img_show = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
                                     ?>
                                     <img src="<?php echo $img_show; ?>" class="card-img-top" alt="รูปอาหาร">
-                                    <div class="card-body">
-                                        <h5 class="card-title"><?php echo $row['product_name']; ?></h5>
-                                        <p class="card-text text-danger fw-bold">฿<?php echo number_format($row['price'], 2); ?></p>
-                                        
-                                        <div class="d-grid gap-2">
-                                            <a href="product_detail.php?id=<?php echo $row['product_id']; ?>" class="btn btn-info btn-sm text-white">ดูรายละเอียด</a>
-                                            
-                                            <a href="cart_action.php?action=add&id=<?php echo $row['product_id']; ?>" class="btn btn-primary btn-sm">
-                                                <i class="fas fa-cart-plus"></i> สั่งซื้อ
-                                            </a>
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title fw-bold text-dark"><?php echo $row['product_name']; ?></h5>
+                                        <div class="mt-auto">
+                                            <p class="price-tag mb-2">฿<?php echo number_format($row['price'], 0); ?></p>
+                                            <div class="d-grid gap-2">
+                                                <a href="product_detail.php?id=<?php echo $row['product_id']; ?>" class="btn btn-outline-secondary btn-sm rounded-pill">รายละเอียด</a>
+                                                <a href="cart_action.php?action=add&id=<?php echo $row['product_id']; ?>" class="btn btn-orange btn-sm">
+                                                    <i class="fas fa-cart-plus"></i> สั่งเลย
+                                                </a>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         <?php endwhile; ?>
                     <?php else: ?>
-                        <div class="alert alert-warning text-center">
-                            <h3><i class="fas fa-search"></i> ไม่พบรายการอาหารที่ค้นหา</h3>
-                            <p>ลองค้นหาด้วยคำอื่น หรือเลือกดูเมนูทั้งหมด</p>
+                        <div class="col-12">
+                            <div class="alert alert-warning text-center rounded-4 p-5">
+                                <h3><i class="fas fa-search"></i> ไม่พบเมนูที่ค้นหา</h3>
+                                <p>ลองค้นหาคำอื่น หรือดูเมนูทั้งหมดของเรา</p>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
