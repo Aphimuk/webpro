@@ -7,11 +7,11 @@ if (session_status() == PHP_SESSION_NONE) { session_start(); }
 
     body {
         font-family: 'Sarabun', sans-serif;
-        background-color: #FFF8E7; /* พื้นหลังสีครีมไข่ไก่ (อ่อนมาก) */
-        color: #3E2723; /* ตัวหนังสือสีน้ำตาลเข้มเกือบดำ (อ่านง่ายกว่าสีดำสนิท) */
+        background-color: #FFF8E7; 
+        color: #3E2723; 
     }
 
-    /* Navbar: สีแดงเข้ม ไล่เฉดไปส้ม (สีแห่งความอร่อย) */
+    
     .navbar-custom {
         background: linear-gradient(135deg, #C62828 0%, #EF6C00 100%);
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
@@ -19,7 +19,7 @@ if (session_status() == PHP_SESSION_NONE) { session_start(); }
     .navbar-brand { font-weight: 800; letter-spacing: 1px; font-size: 1.5rem; }
     .nav-link { font-weight: 500; }
     
-    /* Card: พื้นขาวเงาๆ ตัดกับพื้นหลังครีม */
+    
     .card {
         border: none;
         border-radius: 15px;
@@ -29,7 +29,7 @@ if (session_status() == PHP_SESSION_NONE) { session_start(); }
     }
     .card:hover { transform: translateY(-3px); }
 
-    /* ปุ่มหลัก: สีส้มเข้ม ตัวหนังสือขาว (Contrast สูง) */
+    
     .btn-primary, .btn-success {
         background-color: #EF6C00; 
         border: none;
@@ -38,16 +38,16 @@ if (session_status() == PHP_SESSION_NONE) { session_start(); }
         padding: 8px 20px;
     }
     .btn-primary:hover, .btn-success:hover {
-        background-color: #D84315; /* สีส้มอิฐเข้มขึ้นเมื่อเอาเมาส์ชี้ */
+        background-color: #D84315; 
     }
 
-    /* Headings: สีแดงเลือดหมู เน้นความสำคัญ */
+    
     h1, h2, h3, h4, h5, h6 {
         color: #B71C1C;
         font-weight: 700;
     }
 
-    /* Alert Box Style: ปรับให้เหมือนหน้าสมัครสมาชิก */
+    
     .custom-alert {
         border-radius: 10px;
         border: none;

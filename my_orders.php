@@ -3,7 +3,7 @@ session_start();
 require_once ('connect.php');
 if (!isset($_SESSION['user_id'])) header("Location: login.php");
 
-// Update Profile Logic
+
 if(isset($_POST['update_profile'])){
     $uid = $_SESSION['user_id'];
     $fullname = $_POST['fullname'];
@@ -14,7 +14,7 @@ if(isset($_POST['update_profile'])){
     $_SESSION['fullname'] = $fullname;
     $_SESSION['alert_msg'] = "✅ บันทึกข้อมูลส่วนตัวเรียบร้อยแล้ว";
     $_SESSION['alert_type'] = "success";
-    header("Location: my_orders.php"); // Refresh เพื่อเคลียร์ POST
+    header("Location: my_orders.php"); 
     exit();
 }
 
@@ -80,7 +80,7 @@ $user_info = $conn->query("SELECT * FROM users WHERE user_id=$uid")->fetch_assoc
                                 $orders = $conn->query("SELECT * FROM orders WHERE user_id=$uid ORDER BY order_id DESC");
                                 if($orders->num_rows > 0):
                                     while($o = $orders->fetch_assoc()){
-                                        // เลือกสีป้ายสถานะ
+                                        
                                         $badge_color = 'bg-secondary';
                                         $status_text = $o['status'];
                                         if($o['status']=='pending') { $badge_color = 'bg-warning text-dark'; $status_text = 'รอรับออเดอร์'; }

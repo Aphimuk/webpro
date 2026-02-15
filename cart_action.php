@@ -15,11 +15,11 @@ if ($action == 'add') {
         $_SESSION['cart'][$id] = $qty;
     }
     
-    // ตั้งค่าแจ้งเตือนแบบสวยๆ
+    
     $_SESSION['alert_msg'] = "✅ เพิ่มเมนูลงตะกร้าเรียบร้อยแล้ว!";
     $_SESSION['alert_type'] = "success";
     
-    // ถ้ามาจากหน้า Detail ให้กลับไปหน้า Index หรือหน้าเดิม (แล้วแต่ชอบ)
+    
     header("Location: index.php"); 
 } 
 elseif ($action == 'delete') {

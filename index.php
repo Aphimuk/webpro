@@ -29,7 +29,7 @@ $result_cats = $conn->query("SELECT * FROM categories");
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Sarabun', sans-serif; background-color: #FFF8E1; } /* พื้นหลังสีครีม */
+        body { font-family: 'Sarabun', sans-serif; background-color: #FFF8E1; } 
         .card-img-top { height: 220px; object-fit: cover; border-bottom: 3px solid #FF6D00; }
         .sidebar { background-color: #FFFFFF; padding: 20px; border-radius: 15px; border: 1px solid #FFE0B2; }
         .card { border: none; border-radius: 15px; transition: transform 0.2s; background: #fff; }

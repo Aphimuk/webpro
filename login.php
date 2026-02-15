@@ -2,7 +2,7 @@
 session_start();
 require_once ('connect.php');
 
-// --- PHP Logic ส่วนเดิม ---
+
 $old_fullname = "";
 $old_username = "";
 $old_address = "";  
@@ -91,7 +91,7 @@ if (isset($_POST['login'])) {
     <style>
         * { box-sizing: border-box; }
         body {
-            background: #FFFDE7; /* พื้นหลังครีม */
+            background: #FFFDE7; 
             font-family: 'Sarabun', sans-serif;
             display: flex;
             justify-content: center;
@@ -101,21 +101,21 @@ if (isset($_POST['login'])) {
             margin: 0;
         }
         
-        /* --- แก้ไข: ตั้งค่าสีข้อความทั่วไป (สำหรับฝั่งฟอร์มสีขาว) --- */
+
         h1 { 
             font-weight: 800; margin: 0; 
-            color: #C62828; /* แดงเข้ม (อยู่บนพื้นขาว อ่านง่าย) */
+            color: #C62828; 
         }
         p { font-size: 14px; font-weight: 500; line-height: 20px; letter-spacing: 0.5px; margin: 20px 0 30px; color: #3E2723; }
         span { font-size: 12px; color: #5D4037; font-weight: 500; margin-bottom: 10px; display: block;}
         a { color: #333; font-size: 14px; text-decoration: none; margin: 15px 0 10px; font-weight: bold; }
         a:hover { text-decoration: underline; color: #D84315; }
 
-        /* --- ปุ่มหลัก (Sign In / Sign Up) --- */
+        
         button {
             border-radius: 50px;
             border: 1px solid #BF360C;
-            background-color: #D84315; /* ส้มอิฐ */
+            background-color: #D84315; 
             color: #FFFFFF;
             font-size: 14px;
             font-weight: bold;
@@ -131,11 +131,11 @@ if (isset($_POST['login'])) {
         button:hover { background-color: #BF360C; }
         button:active { transform: scale(0.95); }
         
-        /* --- ปุ่ม Ghost (ปุ่มบนแถบสีแดง) --- */
+        
         button.ghost { 
             background-color: transparent; 
             border-color: #FFFFFF; 
-            color: #FFFFFF; /* บังคับตัวหนังสือสีขาว */
+            color: #FFFFFF; 
             box-shadow: none;
         }
         button.ghost:hover {
@@ -154,8 +154,8 @@ if (isset($_POST['login'])) {
         }
         
         input {
-            background-color: #FFFFFF; /* เปลี่ยนเป็นขาวล้วน */
-            border: 2px solid #EEEEEE; /* ขอบสีเทาจางๆ */
+            background-color: #FFFFFF; 
+            border: 2px solid #EEEEEE; 
             padding: 12px 15px;
             margin: 8px 0;
             width: 100%;
@@ -177,7 +177,7 @@ if (isset($_POST['login'])) {
             min-height: 600px;
         }
         
-        /* Animation */
+        
         .form-container { position: absolute; top: 0; height: 100%; transition: all 0.6s ease-in-out; }
         .sign-in-container { left: 0; width: 50%; z-index: 2; }
         .container.right-panel-active .sign-in-container { transform: translateX(100%); }
@@ -188,7 +188,7 @@ if (isset($_POST['login'])) {
         .overlay-container { position: absolute; top: 0; left: 50%; width: 50%; height: 100%; overflow: hidden; transition: transform 0.6s ease-in-out; z-index: 100; }
         .container.right-panel-active .overlay-container { transform: translateX(-100%); }
         
-        /* --- แถบสีด้านข้าง (Gradient ส้มแดงเข้ม) --- */
+        
         .overlay {
             background: #B71C1C;
             background: -webkit-linear-gradient(to right, #D84315, #B71C1C);
@@ -205,13 +205,13 @@ if (isset($_POST['login'])) {
             transition: transform 0.6s ease-in-out;
         }
         
-        /* --- สำคัญ: แก้ไขสีตัวหนังสือที่อยู่บนแถบสีแดง ให้เป็นสีขาว --- */
+        
         .overlay-panel h1 {
-            color: #FFFFFF !important; /* บังคับสีขาว */
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3); /* ใส่เงาให้อ่านง่ายขึ้น */
+            color: #FFFFFF !important; 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3); 
         }
         .overlay-panel p {
-            color: #FFFFFF !important; /* บังคับสีขาว */
+            color: #FFFFFF !important; 
             font-weight: 500;
         }
         

@@ -10,7 +10,7 @@ if (isset($_POST['reset_password'])) {
     $phone = $conn->real_escape_string($_POST['phone']);
     $new_pass = $_POST['new_password'];
 
-    // เช็คข้อมูล
+    
     $sql_check = "SELECT * FROM users WHERE username = '$user' AND phone = '$phone'";
     $result = $conn->query($sql_check);
 

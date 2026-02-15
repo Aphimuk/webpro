@@ -6,9 +6,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     echo "Access Denied"; exit();
 }
 
-// --------------------------------------------------------
-// 1. Logic ลบสินค้า (เหมือนเดิม)
-// --------------------------------------------------------
+
+// 1. Logic ลบสินค้า
+
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
     $res_imgs = $conn->query("SELECT image_file FROM product_images WHERE product_id=$pid");
@@ -22,9 +22,9 @@ if (isset($_GET['delete_product'])) {
     exit();
 }
 
-// --------------------------------------------------------
-// 2. Logic หมวดหมู่ (เหมือนเดิม)
-// --------------------------------------------------------
+
+// 2. Logic หมวดหมู่ 
+
 if (isset($_POST['add_category'])) {
     $c_name = $_POST['cat_name'];
     $conn->query("INSERT INTO categories (category_name) VALUES ('$c_name')");
@@ -42,9 +42,9 @@ if (isset($_GET['delete_cat'])) {
     exit();
 }
 
-// --------------------------------------------------------
-// 3. Logic อัปเดตสถานะออเดอร์ (เหมือนเดิม)
-// --------------------------------------------------------
+
+// 3. Logic อัปเดตสถานะออเดอร์
+
 if (isset($_POST['update_status'])) {
     $oid = $_POST['order_id'];
     $st = $_POST['status'];
@@ -55,13 +55,12 @@ if (isset($_POST['update_status'])) {
     exit();
 }
 
-// --------------------------------------------------------
-// 4. Logic ลบลูกค้า (แก้ไขใหม่ตามโจทย์)
-// --------------------------------------------------------
+
+// 4. Logic ลบลูกค้า 
 if (isset($_GET['delete_user'])) {
     $uid = $_GET['delete_user'];
     
-    // ขั้นตอนที่ 1: ลบเฉพาะออเดอร์ที่สถานะเป็น 'cancelled' (ยกเลิก) ทิ้งไปก่อน
+    
     $get_cancelled = $conn->query("SELECT order_id FROM orders WHERE user_id=$uid AND status='cancelled'");
     $deleted_count = 0;
     
@@ -74,16 +73,16 @@ if (isset($_GET['delete_user'])) {
         $deleted_count++;
     }
 
-    // ขั้นตอนที่ 2: เช็คว่าเหลือออเดอร์สำคัญ (Pending, Cooking, Completed) ไหม?
+    
     $check_remaining = $conn->query("SELECT COUNT(*) as count FROM orders WHERE user_id=$uid");
     $remaining = $check_remaining->fetch_assoc()['count'];
 
     if ($remaining > 0) {
-        // กรณีที่ 1: ยังมีออเดอร์สำคัญเหลืออยู่ -> ไม่ลบลูกค้า แต่แจ้งว่าเคลียร์ประวัติยกเลิกให้แล้ว
+        
         $_SESSION['alert_msg'] = "⚠️ ระบบลบเฉพาะประวัติที่ 'ยกเลิก' ออกให้แล้ว ($deleted_count รายการ)<br>แต่ยังไม่ลบข้อมูลลูกค้า เนื่องจากยังมีประวัติการซื้อขายที่เสร็จสิ้น/ค้างอยู่ครับ";
         $_SESSION['alert_type'] = "warning";
     } else {
-        // กรณีที่ 2: ไม่เหลือออเดอร์แล้ว (หรือมีแต่ยกเลิกซึ่งลบไปหมดแล้ว) -> ลบลูกค้าได้เลย
+        
         if($conn->query("DELETE FROM users WHERE user_id=$uid")){
             $_SESSION['alert_msg'] = "✅ ลบลูกค้าออกจากระบบเรียบร้อยแล้ว " . ($deleted_count > 0 ? "(พร้อมเคลียร์ประวัติยกเลิก $deleted_count รายการ)" : "");
             $_SESSION['alert_type'] = "success";
@@ -97,7 +96,7 @@ if (isset($_GET['delete_user'])) {
     exit();
 }
 
-// เตรียมตัวแปร
+
 $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
 $search = isset($_GET['search']) ? $_GET['search'] : '';
 ?>

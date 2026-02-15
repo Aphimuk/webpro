@@ -2,7 +2,7 @@
 session_start();
 require_once ('connect.php');
 
-// 1. รับค่า ID
+//  รับค่า ID
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     $sql = "SELECT * FROM products WHERE product_id = $id";
@@ -10,7 +10,7 @@ if (isset($_GET['id'])) {
     $product = $result->fetch_assoc();
 }
 
-// 2. Logic ลบรูปภาพทั้งหมด (Optional)
+// Logic ลบรูปภาพทั้งหมด (Optional)
 if(isset($_POST['delete_images'])){
     $id = $_POST['product_id'];
     $res = $conn->query("SELECT image_file FROM product_images WHERE product_id=$id");
@@ -25,7 +25,7 @@ if(isset($_POST['delete_images'])){
     exit();
 }
 
-// 3. บันทึกข้อมูลเมื่อกด Update
+//  บันทึกข้อมูลเมื่อกด Update
 if (isset($_POST['update'])) {
     $id = $_POST['product_id'];
     $name = $_POST['product_name'];
@@ -47,7 +47,7 @@ if (isset($_POST['update'])) {
                 $target_file = $target_dir . $filename;
                 if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
                     $conn->query("INSERT INTO product_images (product_id, image_file) VALUES ('$id', '$filename')");
-                    // อัปเดตปกถ้ายังไม่มี
+                    
                     $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$id' AND (image_file IS NULL OR image_file='')");
                 }
             }

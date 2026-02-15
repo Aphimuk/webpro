@@ -18,12 +18,12 @@ foreach($_SESSION['cart'] as $p_id => $qty){
     $total_amount += ($row_p['price'] * $qty);
 }
 
-// 1. Insert Orders
+//  Insert Orders
 $sql_order = "INSERT INTO orders (user_id, total_amount, status) VALUES ('$user_id', '$total_amount', 'pending')";
 if ($conn->query($sql_order) === TRUE) {
     $order_id = $conn->insert_id;
 
-    // 2. Insert Order Details
+    //  Insert Order Details
     foreach($_SESSION['cart'] as $p_id => $qty){
         $sql_p = "SELECT price FROM products WHERE product_id = $p_id";
         $res_p = $conn->query($sql_p);
@@ -35,10 +35,10 @@ if ($conn->query($sql_order) === TRUE) {
         $conn->query($sql_detail);
     }
 
-    // 3. ล้างตะกร้า และส่งแจ้งเตือน
+    //  ล้างตะกร้า และส่งแจ้งเตือน
     unset($_SESSION['cart']);
     
-    // --- เปลี่ยนตรงนี้: ส่งค่าไปแจ้งเตือนหน้า my_orders แทน Popup ---
+    //  ส่งค่าไปแจ้งเตือนหน้า my_orders แทน Popup 
     $_SESSION['alert_msg'] = "🎉 สั่งซื้อสำเร็จ! รหัสคำสั่งซื้อของคุณคือ #$order_id ทางร้านได้รับออเดอร์แล้วครับ";
     $_SESSION['alert_type'] = "success";
     header("Location: my_orders.php");

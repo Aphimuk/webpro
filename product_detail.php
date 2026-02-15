@@ -4,24 +4,24 @@ require_once ('connect.php');
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     
-    // ดึงข้อมูลสินค้า
+    
     $sql = "SELECT p.*, c.category_name FROM products p 
             LEFT JOIN categories c ON p.category_id = c.category_id 
             WHERE p.product_id = $id";
     $result = $conn->query($sql);
     $product = $result->fetch_assoc();
 
-    // ดึงรูปภาพทั้งหมดของสินค้านี้
+    
     $sql_img = "SELECT * FROM product_images WHERE product_id = $id";
     $result_img = $conn->query($sql_img);
     
-    // เก็บรูปใส่ Array
+    
     $images = [];
     while($row_img = $result_img->fetch_assoc()){
         $images[] = $row_img['image_file'];
     }
     
-    // ถ้าไม่มีรูปในตารางใหม่ ให้ใช้รูปจากตาราง products เดิม
+    
     if(count($images) == 0 && !empty($product['image_file'])){
         $images[] = $product['image_file'];
     }

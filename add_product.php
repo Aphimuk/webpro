@@ -1,6 +1,6 @@
 <?php
 require_once ('connect.php');
-session_start(); // ต้องมี start session เพื่อใช้ alert
+session_start(); 
 
 if (isset($_POST['submit'])) {
     $name = $_POST['product_name'];
@@ -33,7 +33,7 @@ if (isset($_POST['submit'])) {
             }
         }
 
-        // --- ใช้ Session Alert แทน Popup ---
+        
         $_SESSION['alert_msg'] = "✅ เพิ่มเมนู '$name' เรียบร้อยแล้ว (รูปภาพ: $success_count รูป)";
         $_SESSION['alert_type'] = "success";
         header("Location: admin_panel.php?page=products");
