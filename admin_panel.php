@@ -6,8 +6,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
     echo "Access Denied"; exit();
 }
 
-
-
 // 1. Logic ลบสินค้า
 if (isset($_GET['delete_product'])) {
     $pid = $_GET['delete_product'];
@@ -47,7 +45,7 @@ if (isset($_POST['update_status'])) {
     header("Location: admin_panel.php?page=orders"); exit();
 }
 
-// [ใหม่] 3.1 Logic ลบออเดอร์
+// 3.1 Logic ลบออเดอร์
 if (isset($_GET['delete_order'])) {
     $oid = $_GET['delete_order'];
     // ลบรายละเอียดก่อน
@@ -192,63 +190,40 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
                 <?php elseif($page == 'products'): ?>
                     <h3 class="text-dark fw-bold mb-3">🍗 จัดการสินค้า (DataTables)</h3>
                     <div class="card p-3">
-                        <tbody>
-    <?php
-    
-    $sql = "SELECT p.*, c.category_name FROM products p LEFT JOIN categories c ON p.category_id = c.category_id ORDER BY p.product_id DESC";
-    $res = $conn->query($sql);
-    
-    while($row = $res->fetch_assoc()){
-        $pid = $row['product_id']; 
-    ?>
-    <tr>
-        <td class='text-center'>
-            <?php 
-                
-                $sql_imgs = "SELECT image_file FROM product_images WHERE product_id=$pid";
-                $res_imgs = $conn->query($sql_imgs);
-
-                if($res_imgs->num_rows > 0) {
-                    
-                    while($img = $res_imgs->fetch_assoc()){
-                        
-                        echo "<img src='img/{$img['image_file']}' width='50' height='50' class='rounded border me-1' style='object-fit:cover;'>";
-                    }
-                } else {
-                    
-                    echo "<span class='text-muted small'>ไม่มีรูป</span>";
-                }
-            ?>
-        </td>
-        <td><?php echo $row['product_name']; ?></td>
-        <td><span class='badge bg-secondary'><?php echo $row['category_name']; ?></span></td>
-        <td class='fw-bold text-success'><?php echo number_format($row['price'], 2); ?></td>
-        <td>
-            <a href='edit_product.php?id=<?php echo $row['product_id']; ?>' class='btn btn-warning btn-sm'>แก้ไข</a>
-            <a href='admin_panel.php?delete_product=<?php echo $row['product_id']; ?>' class='btn btn-danger btn-sm' onclick='return confirm("ยืนยันลบสินค้านี้?")'>ลบ</a>
-        </td>
-    </tr>
-    <?php
-    }
-    ?>
-</tbody>
+                        <table id="table_products" class="table table-bordered align-middle" style="width:100%">
+                            <thead class="table-light"><tr><th>รูป</th><th>ชื่อสินค้า</th><th>หมวดหมู่</th><th>ราคา</th><th>จัดการ</th></tr></thead>
                             <tbody>
                             <?php
-                            
                             $sql = "SELECT p.*, c.category_name FROM products p LEFT JOIN categories c ON p.category_id = c.category_id ORDER BY p.product_id DESC";
                             $res = $conn->query($sql);
+                            
                             while($row = $res->fetch_assoc()){
-                                $img_src = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/50";
-                                echo "<tr>
-                                    <td class='text-center'><img src='$img_src' width='50' height='50' class='rounded border' style='object-fit:cover;'></td>
-                                    <td>{$row['product_name']}</td>
-                                    <td><span class='badge bg-secondary'>{$row['category_name']}</span></td>
-                                    <td class='fw-bold text-success'>{$row['price']}</td>
-                                    <td>
-                                        <a href='edit_product.php?id={$row['product_id']}' class='btn btn-warning btn-sm'>แก้ไข</a>
-                                        <a href='admin_panel.php?delete_product={$row['product_id']}' class='btn btn-danger btn-sm' onclick='return confirm(\"ยืนยันลบสินค้านี้?\")'>ลบ</a>
-                                    </td>
-                                </tr>";
+                                $pid = $row['product_id']; 
+                            ?>
+                            <tr>
+                                <td class='text-center' style="min-width: 120px;">
+                                    <?php 
+                                        $sql_imgs = "SELECT image_file FROM product_images WHERE product_id=$pid";
+                                        $res_imgs = $conn->query($sql_imgs);
+
+                                        if($res_imgs->num_rows > 0) {
+                                            while($img = $res_imgs->fetch_assoc()){
+                                                echo "<img src='img/{$img['image_file']}' width='50' height='50' class='rounded border me-1' style='object-fit:cover;'>";
+                                            }
+                                        } else {
+                                            echo "<span class='text-muted small'>ไม่มีรูป</span>";
+                                        }
+                                    ?>
+                                </td>
+                                <td><?php echo $row['product_name']; ?></td>
+                                <td><span class='badge bg-secondary'><?php echo $row['category_name']; ?></span></td>
+                                <td class='fw-bold text-success'><?php echo number_format($row['price'], 2); ?></td>
+                                <td>
+                                    <a href='edit_product.php?id=<?php echo $row['product_id']; ?>' class='btn btn-warning btn-sm'>แก้ไข</a>
+                                    <a href='admin_panel.php?delete_product=<?php echo $row['product_id']; ?>' class='btn btn-danger btn-sm' onclick='return confirm("ยืนยันลบสินค้านี้?")'>ลบ</a>
+                                </td>
+                            </tr>
+                            <?php
                             }
                             ?>
                             </tbody>
