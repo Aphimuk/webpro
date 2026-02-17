@@ -3,7 +3,7 @@ session_start();
 require_once ('connect.php');
 if (!isset($_SESSION['user_id'])) header("Location: login.php");
 
-// Logic Update Profile
+// Logic Update Profile (แก้ไขข้อมูลส่วนตัว)
 if(isset($_POST['update_profile'])){
     $uid = $_SESSION['user_id'];
     $fullname = $_POST['fullname'];
@@ -84,10 +84,8 @@ $user_info = $conn->query("SELECT * FROM users WHERE user_id=$uid")->fetch_assoc
                                     $orders = $conn->query("SELECT * FROM orders WHERE user_id=$uid ORDER BY order_id DESC");
                                     if($orders->num_rows > 0):
                                         while($o = $orders->fetch_assoc()){
-                                            // Check Slip
-                                            $has_slip = !empty($o['slip_file']);
                                             
-                                            // Status Badge
+                                            // Status Badge ร้านค้า
                                             $badge_color = 'bg-secondary';
                                             $status_text = $o['status'];
                                             if($o['status']=='pending') { $badge_color = 'bg-warning text-dark'; $status_text = 'รอรับออเดอร์'; }
@@ -101,19 +99,25 @@ $user_info = $conn->query("SELECT * FROM users WHERE user_id=$uid")->fetch_assoc
                                                 <td class='fw-bold text-danger'>฿".number_format($o['total_amount'], 2)."</td>
                                                 <td>";
                                             
-                                            // Logic ปุ่มจ่ายเงิน
-                                            if($o['status'] == 'cancelled'){
-                                                echo "<span class='text-muted small'>- ยกเลิก -</span>";
+                                            // --- ส่วนแสดงปุ่มจ่ายเงิน (Auto Payment) ---
+                                            if($o['payment_status'] == 'paid'){
+                                                // จ่ายแล้ว
+                                                echo "<span class='badge bg-success'><i class='fas fa-check-circle'></i> จ่ายแล้ว</span>";
+                                                if(!empty($o['payment_method'])){
+                                                    echo "<div class='small text-muted mt-1'>(".strtoupper($o['payment_method']).")</div>";
+                                                }
                                             } else {
-                                                if ($has_slip) {
-                                                    echo "<a href='img/slips/{$o['slip_file']}' target='_blank' class='btn btn-sm btn-outline-info rounded-pill'><i class='fas fa-receipt'></i> ดูสลิป</a>
-                                                          <div class='text-success small mt-1'><i class='fas fa-check-circle'></i> แจ้งโอนแล้ว</div>";
+                                                // ยังไม่จ่าย
+                                                if($o['status'] == 'cancelled'){
+                                                     echo "<span class='text-muted small'>- ยกเลิก -</span>";
                                                 } else {
-                                                    echo "<a href='payment.php?order_id={$o['order_id']}' class='btn btn-sm btn-primary rounded-pill px-3'>
-                                                            <i class='fas fa-money-bill-wave'></i> แจ้งโอน
-                                                          </a>";
+                                                     // ปุ่มกดไปหน้า Gateway
+                                                     echo "<a href='payment_gateway.php?order_id={$o['order_id']}' class='btn btn-sm btn-primary rounded-pill px-3 shadow-sm'>
+                                                            <i class='fas fa-credit-card'></i> ชำระเงินทันที
+                                                           </a>";
                                                 }
                                             }
+                                            // ----------------------------------------
 
                                             echo "</td>
                                                 <td><span class='badge rounded-pill $badge_color'>$status_text</span></td>
