@@ -4,14 +4,27 @@ require_once ('connect.php');
 
 $search_value = ""; 
 $where_sql = "";
+$page_title = "🍗 รายการอาหารแนะนำ"; 
 
 if (isset($_GET['search']) && $_GET['search'] != "") {
     $search = $conn->real_escape_string($_GET['search']);
     $where_sql = "WHERE product_name LIKE '%$search%'";
     $search_value = htmlspecialchars($_GET['search']); 
+    
+    
+    $page_title = "🔍 ผลการค้นหา: " . $search_value;
+
 } elseif (isset($_GET['category_id']) && $_GET['category_id'] != "") {
     $cat_id = $conn->real_escape_string($_GET['category_id']);
     $where_sql = "WHERE category_id = '$cat_id'";
+
+    
+    $sql_cat_name = "SELECT category_name FROM categories WHERE category_id = '$cat_id'";
+    $res_cat_name = $conn->query($sql_cat_name);
+    if ($res_cat_name->num_rows > 0) {
+        $row_cat = $res_cat_name->fetch_assoc();
+        $page_title = "🍽️ หมวดหมู่: " . $row_cat['category_name']; 
+    }
 }
 
 $sql_products = "SELECT * FROM products $where_sql ORDER BY product_id DESC";
@@ -62,7 +75,7 @@ $result_cats = $conn->query("SELECT * FROM categories");
                     <h5 class="text-secondary fw-bold"><i class="fas fa-utensils"></i> ประเภทอาหาร</h5>
                     <hr class="text-warning">
                     <div class="list-group list-group-flush">
-                        <a href="index.php" class="list-group-item list-group-item-action rounded mb-1">ทั้งหมด</a>
+                        <a href="index.php" class="list-group-item list-group-item-action rounded mb-1 <?php echo (!isset($_GET['category_id']) && !isset($_GET['search'])) ? 'active' : ''; ?>">ทั้งหมด</a>
                         <?php while($cat = $result_cats->fetch_assoc()): ?>
                             <a href="index.php?category_id=<?php echo $cat['category_id']; ?>" 
                                class="list-group-item list-group-item-action rounded mb-1 <?php echo (isset($_GET['category_id']) && $_GET['category_id'] == $cat['category_id']) ? 'active' : ''; ?>">
@@ -74,13 +87,15 @@ $result_cats = $conn->query("SELECT * FROM categories");
             </div>
 
             <div class="col-md-9">
-                <h3 class="fw-bold text-dark mb-3">🍗 รายการอาหารแนะนำ</h3>
+                <h3 class="fw-bold text-dark mb-3"><?php echo $page_title; ?></h3>
+                
                 <div class="row">
                     <?php if ($result_products->num_rows > 0): ?>
                         <?php while($row = $result_products->fetch_assoc()): ?>
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100 shadow-sm">
                                     <?php 
+                                        
                                         $img_show = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
                                     ?>
                                     <img src="<?php echo $img_show; ?>" class="card-img-top" alt="รูปอาหาร">
@@ -104,6 +119,7 @@ $result_cats = $conn->query("SELECT * FROM categories");
                             <div class="alert alert-warning text-center rounded-4 p-5">
                                 <h3><i class="fas fa-search"></i> ไม่พบเมนูที่ค้นหา</h3>
                                 <p>ลองค้นหาคำอื่น หรือดูเมนูทั้งหมดของเรา</p>
+                                <a href="index.php" class="btn btn-outline-dark mt-3">ดูเมนูทั้งหมด</a>
                             </div>
                         </div>
                     <?php endif; ?>
