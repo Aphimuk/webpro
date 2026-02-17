@@ -21,19 +21,19 @@ $order = $result->fetch_assoc();
 
 // ถ้ามีการส่งฟอร์มแจ้งโอน
 if (isset($_POST['submit_payment'])) {
-    $target_dir = __DIR__ . "/img/slips/"; // สร้างโฟลเดอร์ img/slips ด้วยนะครับ
+    $target_dir = __DIR__ . "/img/slips/"; 
     if (!file_exists($target_dir)) { mkdir($target_dir, 0777, true); }
 
     $filename = basename($_FILES['slip_image']['name']);
     $fileType = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
     
-    // ตั้งชื่อไฟล์ใหม่ป้องกันชื่อซ้ำ: slip_orderID_timestamp.jpg
+    // ตั้งชื่อไฟล์ใหม่: slip_orderID_timestamp.jpg
     $new_filename = "slip_" . $order_id . "_" . time() . "." . $fileType;
     $target_file = $target_dir . $new_filename;
 
     if (move_uploaded_file($_FILES['slip_image']['tmp_name'], $target_file)) {
         // อัปเดตฐานข้อมูล
-        $sql_update = "UPDATE orders SET slip_file = '$new_filename', payment_date = NOW() WHERE order_id = $order_id";
+        $sql_update = "UPDATE orders SET slip_file = '$new_filename', payment_date = NOW(), status = 'pending' WHERE order_id = $order_id";
         $conn->query($sql_update);
 
         $_SESSION['alert_msg'] = "✅ แจ้งโอนเงินเรียบร้อยแล้ว รอผู้ดูแลตรวจสอบครับ";
@@ -41,7 +41,7 @@ if (isset($_POST['submit_payment'])) {
         header("Location: my_orders.php");
         exit();
     } else {
-        $error = "❌ อัปโหลดไฟล์ไม่สำเร็จ";
+        echo "<script>alert('อัปโหลดไฟล์ไม่สำเร็จ');</script>";
     }
 }
 ?>
@@ -53,6 +53,7 @@ if (isset($_POST['submit_payment'])) {
     <title>แจ้งชำระเงิน - ออเดอร์ #<?php echo $order_id; ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>body { font-family: 'Sarabun', sans-serif; background-color: #f8f9fa; }</style>
 </head>
 <body>
@@ -68,19 +69,22 @@ if (isset($_POST['submit_payment'])) {
                     <div class="card-body p-4">
                         
                         <div class="alert alert-info text-center">
-                            <h5 class="fw-bold"><i class="fas fa-university"></i> ธนาคารกสิกรไทย</h5>
-                            <p class="mb-1">ชื่อบัญชี: <strong>ร้านไก่ทอดบักปึก จำกัด</strong></p>
-                            <h3 class="text-primary fw-bold my-2">099-1-23456-7</h3>
-                            <p class="mb-0 small text-muted">ยอดที่ต้องชำระ: <strong class="text-danger fs-5"><?php echo number_format($order['total_amount'], 2); ?></strong> บาท</p>
+                            <h5 class="fw-bold"><i class="fas fa-university"></i> ธนาคารกรุงไทย</h5>
+                            <p class="mb-1">ชื่อบัญชี: <strong>นายอภิมุข แสงดอกไม้</strong></p>
+                            <h3 class="text-primary fw-bold my-2">0985214423</h3>
+                            
+                            <div class="my-3 p-2 bg-white rounded d-inline-block shadow-sm">
+                                <img src="img/xxx" alt="QR Code สแกนจ่าย" style="max-width: 200px; width: 100%;">
+                                <p class="text-muted small mt-1 mb-0">สแกน QR เพื่อชำระเงิน</p>
+                            </div>
+                            <hr>
+                            <p class="mb-0 small text-muted">ยอดที่ต้องชำระ: <strong class="text-danger fs-4"><?php echo number_format($order['total_amount'], 2); ?></strong> บาท</p>
                         </div>
-
-                        <hr>
 
                         <form method="post" enctype="multipart/form-data">
                             <div class="mb-3">
-                                <label class="form-label fw-bold">แนบหลักฐานการโอนเงิน (สลิป)</label>
+                                <label class="form-label fw-bold">แนบสลิปการโอน</label>
                                 <input type="file" name="slip_image" class="form-control" accept="image/*" required>
-                                <div class="form-text">รองรับไฟล์ .jpg, .png, .jpeg</div>
                             </div>
 
                             <div class="d-grid gap-2">
