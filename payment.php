@@ -74,7 +74,7 @@ if (isset($_POST['submit_payment'])) {
                             <h3 class="text-primary fw-bold my-2">0985214423</h3>
                             
                             <div class="my-3 p-2 bg-white rounded d-inline-block shadow-sm">
-                                <img src="img/xxx" alt="QR Code สแกนจ่าย" style="max-width: 200px; width: 100%;">
+                                <img src="img/xxx.jpg" alt="QR Code สแกนจ่าย" style="max-width: 200px; width: 100%;">
                                 <p class="text-muted small mt-1 mb-0">สแกน QR เพื่อชำระเงิน</p>
                             </div>
                             <hr>
