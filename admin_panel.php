@@ -48,11 +48,8 @@ if (isset($_POST['update_status'])) {
 // 3.1 Logic ลบออเดอร์
 if (isset($_GET['delete_order'])) {
     $oid = $_GET['delete_order'];
-    // ลบรายละเอียดก่อน
     $conn->query("DELETE FROM order_details WHERE order_id=$oid");
-    // ลบตัวออเดอร์
     $conn->query("DELETE FROM orders WHERE order_id=$oid");
-    
     $_SESSION['alert_msg'] = "🗑️ ลบออเดอร์ #$oid เรียบร้อยแล้ว";
     $_SESSION['alert_type'] = "warning";
     header("Location: admin_panel.php?page=orders"); exit();
@@ -147,7 +144,7 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
                     <div class="card p-3">
                         <table id="table_orders" class="table table-hover align-middle" style="width:100%">
                             <thead class="table-light">
-                                <tr><th>#ID</th><th>ลูกค้า</th><th>ยอดรวม</th><th>สถานะ</th><th>เปลี่ยนสถานะ</th><th>จัดการ</th></tr>
+                                <tr><th>#ID</th><th>ลูกค้า</th><th>ยอดรวม</th><th>หลักฐานโอน</th><th>สถานะ</th><th>เปลี่ยนสถานะ</th><th>จัดการ</th></tr>
                             </thead>
                             <tbody>
                             <?php
@@ -159,10 +156,17 @@ $page = isset($_GET['page']) ? $_GET['page'] : 'orders';
                                 if($row['status']=='completed') $st_color='success';
                                 if($row['status']=='cancelled') $st_color='danger';
 
+                                // ส่วนแสดงสลิป
+                                $slip_html = "<span class='badge bg-light text-muted border'>ยังไม่จ่าย</span>";
+                                if (!empty($row['slip_file'])) {
+                                    $slip_html = "<a href='img/slips/{$row['slip_file']}' target='_blank' class='btn btn-sm btn-outline-success'><i class='fas fa-file-invoice'></i> ดูสลิป</a>";
+                                }
+
                                 echo "<tr>
                                     <td class='fw-bold'>#{$row['order_id']}</td>
                                     <td>{$row['username']}</td>
                                     <td class='fw-bold text-danger'>฿".number_format($row['total_amount'])."</td>
+                                    <td class='text-center'>$slip_html</td>
                                     <td><span class='badge bg-$st_color'>".strtoupper($row['status'])."</span></td>
                                     <td>
                                         <form method='post' class='d-flex align-items-center gap-2'>
