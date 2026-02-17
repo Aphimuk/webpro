@@ -2,7 +2,8 @@
 require_once ('connect.php');
 session_start(); 
 
-if (isset($_POST['submit'])) {
+// เปลี่ยนเงื่อนไขตรวจสอบนิดหน่อย เพื่อให้รองรับกรณีปุ่มถูกล็อค (Disabled)
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['product_name'];
     $desc = $_POST['description'];
     $price = $_POST['price'];
@@ -19,22 +20,26 @@ if (isset($_POST['submit'])) {
         $countfiles = count($_FILES['product_images']['name']);
         $success_count = 0;
         
-        for($i = 0; $i < $countfiles; $i++){
-            $filename = basename($_FILES['product_images']['name'][$i]);
-            if($filename != ""){
-                $target_file = $target_dir . $filename;
-                if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
-                    $conn->query("INSERT INTO product_images (product_id, image_file) VALUES ('$last_id', '$filename')");
-                    $success_count++;
-                    if($success_count == 1){
-                        $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$last_id'");
+        // ตรวจสอบว่ามีการเลือกไฟล์มาจริงๆ
+        if($countfiles > 0 && !empty($_FILES['product_images']['name'][0])) {
+            for($i = 0; $i < $countfiles; $i++){
+                $filename = basename($_FILES['product_images']['name'][$i]);
+                if($filename != ""){
+                    $target_file = $target_dir . $filename;
+                    if(move_uploaded_file($_FILES['product_images']['tmp_name'][$i], $target_file)){
+                        $conn->query("INSERT INTO product_images (product_id, image_file) VALUES ('$last_id', '$filename')");
+                        $success_count++;
+                        
+                        // อัปเดตรูปหลัก (เอารูปแรกที่อัปโหลดสำเร็จ)
+                        if($success_count == 1){
+                            $conn->query("UPDATE products SET image_file='$filename' WHERE product_id='$last_id'");
+                        }
                     }
                 }
             }
         }
 
-        
-        $_SESSION['alert_msg'] = "✅ เพิ่มเมนู '$name' เรียบร้อยแล้ว (รูปภาพ: $success_count รูป)";
+        $_SESSION['alert_msg'] = "✅ เพิ่มเมนู '$name' เรียบร้อยแล้ว";
         $_SESSION['alert_type'] = "success";
         header("Location: admin_panel.php?page=products");
         exit();
@@ -62,7 +67,8 @@ if (isset($_POST['submit'])) {
                 <h4 class="mb-0">🍗 เพิ่มเมนูอาหารใหม่</h4>
             </div>
             <div class="card-body p-4">
-                <form action="" method="post" enctype="multipart/form-data">
+                <form action="" method="post" enctype="multipart/form-data" onsubmit="return preventDoubleSubmit(this);">
+                    
                     <div class="mb-3">
                         <label class="form-label fw-bold">ชื่อเมนูอาหาร</label>
                         <input type="text" name="product_name" class="form-control" required>
@@ -94,11 +100,23 @@ if (isset($_POST['submit'])) {
                     </div>
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                         <a href="admin_panel.php?page=products" class="btn btn-secondary">ยกเลิก</a>
-                        <button type="submit" name="submit" class="btn btn-success px-4">บันทึกข้อมูล</button>
+                        
+                        <button type="submit" name="submit" id="btnSave" class="btn btn-success px-4">บันทึกข้อมูล</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    <script>
+        function preventDoubleSubmit(form) {
+            var btn = document.getElementById('btnSave');
+            if (btn) {
+                btn.disabled = true; // ล็อคปุ่ม
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> กำลังบันทึก...'; // เปลี่ยนข้อความ
+            }
+            return true; // อนุญาตให้ส่งฟอร์มต่อ
+        }
+    </script>
 </body>
 </html>
