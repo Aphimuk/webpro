@@ -4,23 +4,19 @@ require_once ('connect.php');
 if (isset($_GET['id'])) {
     $id = $_GET['id'];
     
-    
     $sql = "SELECT p.*, c.category_name FROM products p 
             LEFT JOIN categories c ON p.category_id = c.category_id 
             WHERE p.product_id = $id";
     $result = $conn->query($sql);
     $product = $result->fetch_assoc();
 
-    
     $sql_img = "SELECT * FROM product_images WHERE product_id = $id";
     $result_img = $conn->query($sql_img);
-    
     
     $images = [];
     while($row_img = $result_img->fetch_assoc()){
         $images[] = $row_img['image_file'];
     }
-    
     
     if(count($images) == 0 && !empty($product['image_file'])){
         $images[] = $product['image_file'];
@@ -37,6 +33,7 @@ if (isset($_GET['id'])) {
     <meta charset="UTF-8">
     <title><?php echo $product['product_name']; ?> - รายละเอียด</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .carousel-item img {
             height: 400px;
@@ -85,7 +82,7 @@ if (isset($_GET['id'])) {
                             <span class="visually-hidden">Next</span>
                         </button>
                     </div>
-                    </div>
+                </div>
 
                 <div class="col-md-6">
                     <div class="card-body">
@@ -104,15 +101,21 @@ if (isset($_GET['id'])) {
                             <input type="hidden" name="action" value="add">
                             <input type="hidden" name="id" value="<?php echo $product['product_id']; ?>">
                             
-                            <div class="row align-items-center">
+                            <div class="row align-items-center mt-3">
                                 <div class="col-auto">
-                                    <label>จำนวน:</label>
+                                    <label class="fw-bold">จำนวน:</label>
                                 </div>
                                 <div class="col-auto">
-                                    <input type="number" name="qty" value="1" min="1" class="form-control" style="width: 80px;">
+                                    <div class="input-group rounded overflow-hidden shadow-sm" style="width: 140px;">
+                                        <button type="button" class="btn btn-outline-secondary bg-white text-dark fw-bold border-secondary" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">-</button>
+                                        <input type="number" name="qty" class="form-control text-center border-secondary fs-5" value="1" min="1" readonly style="background-color: #fff;">
+                                        <button type="button" class="btn btn-outline-secondary bg-white text-dark fw-bold border-secondary" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">+</button>
+                                    </div>
                                 </div>
-                                <div class="col">
-                                    <button type="submit" class="btn btn-primary w-100">ใส่ตะกร้าสินค้า</button>
+                                <div class="col mt-3 mt-sm-0">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+                                        <i class="fas fa-cart-plus"></i> ใส่ตะกร้าสินค้า
+                                    </button>
                                 </div>
                             </div>
                         </form>

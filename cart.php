@@ -9,7 +9,7 @@ require_once ('connect.php');
     <title>ตะกร้าความอร่อย - บักปึก</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    </head>
+</head>
 <body>
     <?php include 'navbar.php'; ?>
     
@@ -52,9 +52,11 @@ require_once ('connect.php');
                                 </td>
                                 <td><?php echo number_format($row['price'], 2); ?></td>
                                 <td>
-                                    <span class="badge bg-warning text-dark rounded-pill px-3 py-2 fs-6 shadow-sm">
-                                        <?php echo $qty; ?>
-                                    </span>
+                                    <div class="input-group input-group-sm mx-auto shadow-sm rounded-pill overflow-hidden" style="width: 130px; border: 1px solid #ffc107;">
+                                        <a href="cart_action.php?action=decrease&id=<?php echo $p_id; ?>" class="btn btn-warning text-dark fw-bold px-3" style="text-decoration: none;">-</a>
+                                        <input type="text" class="form-control text-center bg-white border-0 fw-bold" value="<?php echo $qty; ?>" readonly>
+                                        <a href="cart_action.php?action=add&id=<?php echo $p_id; ?>&qty=1" class="btn btn-warning text-dark fw-bold px-3" style="text-decoration: none;">+</a>
+                                    </div>
                                 </td>
                                 <td class="text-danger fs-5">฿<?php echo number_format($sum, 2); ?></td>
                                 <td>

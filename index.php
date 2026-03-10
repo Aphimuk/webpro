@@ -11,14 +11,12 @@ if (isset($_GET['search']) && $_GET['search'] != "") {
     $where_sql = "WHERE product_name LIKE '%$search%'";
     $search_value = htmlspecialchars($_GET['search']); 
     
-    
     $page_title = "🔍 ผลการค้นหา: " . $search_value;
 
 } elseif (isset($_GET['category_id']) && $_GET['category_id'] != "") {
     $cat_id = $conn->real_escape_string($_GET['category_id']);
     $where_sql = "WHERE category_id = '$cat_id'";
 
-    
     $sql_cat_name = "SELECT category_name FROM categories WHERE category_id = '$cat_id'";
     $res_cat_name = $conn->query($sql_cat_name);
     if ($res_cat_name->num_rows > 0) {
@@ -95,7 +93,6 @@ $result_cats = $conn->query("SELECT * FROM categories");
                             <div class="col-md-4 mb-4">
                                 <div class="card h-100 shadow-sm">
                                     <?php 
-                                        
                                         $img_show = !empty($row['image_file']) ? "img/".$row['image_file'] : "https://via.placeholder.com/300x200?text=No+Image";
                                     ?>
                                     <img src="<?php echo $img_show; ?>" class="card-img-top" alt="รูปอาหาร">
@@ -103,12 +100,24 @@ $result_cats = $conn->query("SELECT * FROM categories");
                                         <h5 class="card-title fw-bold text-dark"><?php echo $row['product_name']; ?></h5>
                                         <div class="mt-auto">
                                             <p class="price-tag mb-2">฿<?php echo number_format($row['price'], 0); ?></p>
-                                            <div class="d-grid gap-2">
-                                                <a href="product_detail.php?id=<?php echo $row['product_id']; ?>" class="btn btn-outline-secondary btn-sm rounded-pill">รายละเอียด</a>
-                                                <a href="cart_action.php?action=add&id=<?php echo $row['product_id']; ?>" class="btn btn-orange btn-sm">
+                                            
+                                            <form action="cart_action.php" method="GET" class="mt-2">
+                                                <input type="hidden" name="action" value="add">
+                                                <input type="hidden" name="id" value="<?php echo $row['product_id']; ?>">
+                                                
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <div class="input-group input-group-sm rounded-pill overflow-hidden border" style="width: 100px;">
+                                                        <button type="button" class="btn btn-light text-dark fw-bold" onclick="this.parentNode.querySelector('input[type=number]').stepDown()">-</button>
+                                                        <input type="number" name="qty" class="form-control text-center border-0 p-0" value="1" min="1" readonly style="background-color: #fff;">
+                                                        <button type="button" class="btn btn-light text-dark fw-bold" onclick="this.parentNode.querySelector('input[type=number]').stepUp()">+</button>
+                                                    </div>
+                                                    <a href="product_detail.php?id=<?php echo $row['product_id']; ?>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">รายละเอียด</a>
+                                                </div>
+                                                <button type="submit" class="btn btn-orange btn-sm w-100 rounded-pill">
                                                     <i class="fas fa-cart-plus"></i> สั่งเลย
-                                                </a>
-                                            </div>
+                                                </button>
+                                            </form>
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -130,4 +139,4 @@ $result_cats = $conn->query("SELECT * FROM categories");
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-</html>
+</html> 

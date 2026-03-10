@@ -3,9 +3,11 @@ session_start();
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
+$return_url = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : 'index.php';
+
 if ($action == 'add') {
     $id = $_GET['id'];
-    $qty = isset($_GET['qty']) ? $_GET['qty'] : 1;
+    $qty = isset($_GET['qty']) ? (int)$_GET['qty'] : 1;
     
     if (!isset($_SESSION['cart'])) { $_SESSION['cart'] = array(); }
 
@@ -15,13 +17,27 @@ if ($action == 'add') {
         $_SESSION['cart'][$id] = $qty;
     }
     
-    
     $_SESSION['alert_msg'] = "✅ เพิ่มเมนูลงตะกร้าเรียบร้อยแล้ว!";
     $_SESSION['alert_type'] = "success";
-    
-    
-    header("Location: index.php"); 
+    header("Location: " . $return_url); 
+    exit();
 } 
+elseif ($action == 'decrease') {
+    $id = $_GET['id'];
+    if (isset($_SESSION['cart'][$id])) {
+        if ($_SESSION['cart'][$id] > 1) {
+            $_SESSION['cart'][$id]--;
+            $_SESSION['alert_msg'] = "➖ ลดจำนวนสินค้าแล้ว";
+            $_SESSION['alert_type'] = "warning";
+        } else {
+            unset($_SESSION['cart'][$id]);
+            $_SESSION['alert_msg'] = "🗑️ ลบรายการออกจากตะกร้าแล้ว";
+            $_SESSION['alert_type'] = "warning";
+        }
+    }
+    header("Location: cart.php");
+    exit();
+}
 elseif ($action == 'delete') {
     $id = $_GET['id'];
     unset($_SESSION['cart'][$id]);
@@ -29,9 +45,11 @@ elseif ($action == 'delete') {
     $_SESSION['alert_msg'] = "🗑️ ลบรายการออกจากตะกร้าแล้ว";
     $_SESSION['alert_type'] = "warning";
     header("Location: cart.php");
+    exit();
 }
 elseif ($action == 'clear') {
     unset($_SESSION['cart']);
     header("Location: index.php");
+    exit();
 }
 ?>
